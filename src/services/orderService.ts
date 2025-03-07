@@ -6,8 +6,6 @@ import { sendEmail } from '@/utils/sendEmail'
 
 export class OrderService {
     async createOrder(userId: string, orderData: any, uow: UnitOfWork) {
-        const session = uow.getSession()
-
         const { items, ...orderDetails } = orderData
         if (!items || !Array.isArray(items) || items.length === 0) {
             throw new Error('Order must contain at least one item')
@@ -17,7 +15,7 @@ export class OrderService {
         const productIds = items.map((item) => item.product)
         const inventories = await Inventory.find({
             product: { $in: productIds },
-        }).session(session)
+        })
 
         // Kiểm tra tồn kho
         for (const item of items) {
@@ -38,13 +36,12 @@ export class OrderService {
                     filter: { product: item.product },
                     update: { $inc: { quantity: -item.quantity } },
                 },
-            })),
-            { session }
+            }))
         )
 
         // Tạo đơn hàng
         const order = new Order(orderDetails)
-        await order.save({ session })
+        await order.save
 
         // Gửi email xác nhận
         const emailSubject = 'Order Confirmation'
@@ -56,11 +53,9 @@ export class OrderService {
         await sendEmail(orderData.email, emailSubject, emailText, emailHtml)
 
         // Xóa sản phẩm đã mua khỏi giỏ hàng
-        await User.findByIdAndUpdate(
-            userId,
-            { $pull: { cart: { productId: { $in: productIds } } } },
-            { session }
-        )
+        await User.findByIdAndUpdate(userId, {
+            $pull: { cart: { productId: { $in: productIds } } },
+        })
 
         return order
     }

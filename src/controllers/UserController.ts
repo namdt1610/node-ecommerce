@@ -128,13 +128,12 @@ export const addToFavorites = async (
             return
         }
 
-        const pid = new mongoose.Types.ObjectId(productId)
-        if (user.favorites.includes(pid)) {
+        if (user.favorites.includes(productId)) {
             res.status(400).json({ message: 'Product already in favorites' })
             return
         }
 
-        user.favorites.push(pid)
+        user.favorites.push(productId)
         await user.save()
         res.status(200).json({
             message: 'Product added to favorites successfully',

@@ -17,7 +17,6 @@ import cartRoutes from './routes/CartRoutes'
 import dashboardRoutes from './routes/DashboardRoutes'
 import reviewRoutes from './routes/ReviewRoutes'
 import warehouseRoutes from './routes/WarehouseRoutes'
-import uploadRoutes from './routes/UploadRoutes'
 
 const app = express()
 
@@ -67,7 +66,6 @@ app.use('/api/cart', cartRoutes)
 app.use('/api/dashboard', dashboardRoutes)
 app.use('/api/reviews', reviewRoutes)
 app.use('/api/warehouses', warehouseRoutes)
-app.use('/api', uploadRoutes)
 
 // Middleware xử lý lỗi chung
 app.use(

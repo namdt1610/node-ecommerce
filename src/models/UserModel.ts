@@ -1,28 +1,24 @@
-import mongoose, { Model, Document, Schema, Types } from 'mongoose'
-
-interface IPermission {
-    resource: string
-    actions: string[]
-}
+import mongoose, { Model, Document, Schema } from 'mongoose'
+import { IRole } from './RoleModel'
 
 interface IFavorite {
-    _id: Types.ObjectId
+    _id: Schema.Types.ObjectId
 }
 
 export interface IUser extends Document {
-    _id: Types.ObjectId
+    _id: Schema.Types.ObjectId
     avatar?: string
     status: 'active' | 'inactive'
     name: string
     email: string
     username?: string
     password: string
-    role: 'user' | 'admin' | 'moderator'
-    permissions?: IPermission[]
+    role: Schema.Types.ObjectId | IRole
     favorites: IFavorite[]
+    resetPasswordToken?: string
+    resetPasswordExpires?: Date
 }
 
-// Interface cho User Model
 interface IUserModel extends Model<IUser> {
     signup(email: string, password: string): Promise<IUser>
     login(email: string, password: string, res: any): Promise<void>
@@ -33,7 +29,6 @@ interface IUserModel extends Model<IUser> {
     ): Promise<boolean>
 }
 
-// Khai báo Schema
 const userSchema = new Schema<IUser>(
     {
         avatar: { type: String, default: null },
@@ -47,22 +42,18 @@ const userSchema = new Schema<IUser>(
         username: { type: String, default: null },
         password: { type: String, required: true, select: false },
         role: {
-            type: String,
-            enum: ['user', 'admin', 'moderator'],
-            default: 'user',
+            type: Schema.Types.ObjectId,
+            ref: 'Role',
+            required: true,
         },
-        permissions: [
-            {
-                resource: { type: String, required: true }, // Ví dụ: 'product', 'order'
-                actions: [{ type: String, required: true }], // ['read', 'write']
-            },
-        ],
         favorites: [
             {
-                type: Types.ObjectId,
+                type: Schema.Types.ObjectId,
                 ref: 'Product',
             },
         ],
+        resetPasswordToken: { type: String, required: false },
+        resetPasswordExpires: { type: Date, required: false },
     },
     { timestamps: true }
 )

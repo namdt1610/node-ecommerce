@@ -1,9 +1,10 @@
 import { Request, Response, NextFunction } from 'express'
 import jwt from 'jsonwebtoken'
 import User from '@/models/UserModel'
+import { IRole } from '@/models/RoleModel'
 
 interface AuthRequest extends Request {
-    user?: { id: string; role: string }
+    user?: { id: string; role: IRole | Object }
 }
 
 export const authMiddleware = async (

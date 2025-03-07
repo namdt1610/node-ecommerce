@@ -8,6 +8,24 @@ const transporter = nodemailer.createTransport({
     },
 })
 
+export const sendResetEmail = async (email: string, token: string) => {
+    const resetLink = `http://localhost:3000/reset-password?token=${token}`
+
+    const mailOptions = {
+        from: process.env.EMAIL_USER,
+        to: email,
+        subject: 'Reset mật khẩu',
+        html: `
+            <p>Chào bạn,</p>
+            <p>Bạn đã yêu cầu đặt lại mật khẩu. Nhấn vào link bên dưới để tiếp tục:</p>
+            <a href="${resetLink}">${resetLink}</a>
+            <p>Nếu bạn không yêu cầu, hãy bỏ qua email này.</p>
+        `,
+    }
+
+    await transporter.sendMail(mailOptions)
+}
+
 export const sendEmail = async (
     to: string,
     subject: string,

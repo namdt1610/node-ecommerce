@@ -4,8 +4,8 @@ import { UnitOfWork } from '@/repositories/unitOfWork'
 import { AuthSchema } from '@/schemas/AuthSchema'
 import jwt from 'jsonwebtoken'
 
-class AuthController {
-    static async register(
+export const AuthController = {
+     async register(
         req: Request,
         res: Response,
         next: NextFunction
@@ -25,9 +25,9 @@ class AuthController {
             }
             next(error)
         }
-    }
+    },
 
-    static async login(
+     async login(
         req: Request,
         res: Response,
         next: NextFunction
@@ -56,9 +56,9 @@ class AuthController {
             }
             next(error)
         }
-    }
+    },
 
-    static async refreshToken(
+     async refreshToken(
         req: Request,
         res: Response,
         next: NextFunction
@@ -90,9 +90,9 @@ class AuthController {
         } catch (error) {
             next(error)
         }
-    }
+    },
 
-    static async logout(
+     async logout(
         req: Request,
         res: Response,
         next: NextFunction
@@ -109,6 +109,29 @@ class AuthController {
 
             res.clearCookie('refreshToken')
             res.json({ message: 'Logged out successfully' })
+        } catch (error) {
+            next(error)
+        }
+    },
+
+    async requestPasswordReset(
+        req: Request,
+        res: Response,
+        next: NextFunction
+    ) {
+        try {
+            await AuthService.requestPasswordReset(req.body.email)
+            return res.json({ message: 'Email reset password đã được gửi!' })
+        } catch (error) {
+            next(error)
+        }
+    },
+
+    async resetPassword(req: Request, res: Response, next: NextFunction) {
+        try {
+            const { token, newPassword } = req.body
+            await AuthService.resetPassword(token, newPassword)
+            return res.json({ message: 'Mật khẩu đã được đặt lại thành công!' })
         } catch (error) {
             next(error)
         }
