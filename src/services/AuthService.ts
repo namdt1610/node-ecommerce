@@ -6,18 +6,23 @@ import { UserRepository } from '@/repositories/UserRepository'
 import crypto from 'crypto'
 import { sendResetEmail } from '@/utils/sendEmail'
 import { UnitOfWork } from '@/repositories/unitOfWork'
+import { uowWrapper } from '@/utils/uowWrapper'
 
 const ACCESS_TOKEN_EXPIRES = '15m'
 const REFRESH_TOKEN_EXPIRES = 60 * 60 * 24 * 7
 
-class AuthService {
-    async generateAccessToken(userId: string) {
+export class AuthService {
+    // constructor(private readonly uow: UnitOfWork) {
+    //     this.uow = uow
+    // }
+
+    generateAccessToken(userId: string) {
         return jwt.sign({ userId }, process.env.ACCESS_SECRET as string, {
             expiresIn: ACCESS_TOKEN_EXPIRES,
         })
     }
 
-    async generateRefreshToken(userId: string) {
+    generateRefreshToken(userId: string) {
         return jwt.sign({ userId }, process.env.REFRESH_SECRET as string, {
             expiresIn: REFRESH_TOKEN_EXPIRES,
         })
@@ -42,43 +47,58 @@ class AuthService {
     }
 
     async login(email: string, password: string) {
-        const user = await User.findOne({ email }).select('+password').lean()
-        if (!user) throw new AuthError('Invalid email or password', 401)
+        return uowWrapper(async (uow) => {
+            const user = await uow.userRepository.findByEmail(email)
 
-        const isMatch = await bcrypt.compare(password, user.password)
-        if (!isMatch) throw new AuthError('Invalid email or password', 401)
+            if (!user) throw new AuthError('Invalid email or password', 401)
 
-        const accessToken = this.generateAccessToken(user._id.toString())
-        const refreshToken = this.generateRefreshToken(user._id.toString())
-        await this.storeRefreshToken(user._id.toString(), await refreshToken)
+            const isMatch = await bcrypt.compare(password, user.password)
+            if (!isMatch) throw new AuthError('Invalid email or password', 401)
 
-        return {
-            user: { id: user._id, email: user.email },
-            accessToken,
-            refreshToken,
-        }
+            const userId = user._id.toString()
+            const accessToken = this.generateAccessToken(userId)
+            const refreshToken = this.generateRefreshToken(userId)
+            await this.storeRefreshToken(userId, refreshToken)
+
+            return {
+                user: { id: user._id, email: user.email },
+                accessToken,
+                refreshToken,
+            }
+        })
     }
 
     async register(email: string, password: string) {
-        const existingUser = await User.findOne({ email }).lean()
-        if (existingUser) throw new AuthError('Email already in use', 409)
+        return uowWrapper(async (uow) => {
+            const existingUser = await uow.userRepository.findByEmail(email)
+            if (existingUser) throw new AuthError('Email already in use', 409)
 
-        const hashedPassword = await bcrypt.hash(password, 10)
-        const newUser = await User.create({ email, password: hashedPassword })
+            const hashedPassword = await bcrypt.hash(password, 10)
+            const newUser = await uow.userRepository.createUser(
+                email,
+                hashedPassword
+            )
 
-        return { id: newUser._id, email: newUser.email }
+            const userId = newUser._id.toString()
+            const accessToken = this.generateAccessToken(userId)
+            const refreshToken = this.generateRefreshToken(userId)
+            await this.storeRefreshToken(userId, refreshToken)
+
+            return {
+                user: { id: newUser._id, email: newUser.email },
+                accessToken,
+                refreshToken,
+            }
+        })
     }
 
     async requestPasswordReset(email: string) {
-        const uow = new UnitOfWork()
-        await uow.start()
-
-        try {
+        return uowWrapper(async (uow) => {
             const user = await uow.userRepository.findByEmail(email)
             if (!user) throw new Error('User not found')
 
             const resetToken = crypto.randomBytes(32).toString('hex')
-            const expiresAt = new Date(Date.now() + 30 * 60 * 1000) // 30 phút
+            const expiresAt = new Date(Date.now() + 30 * 60 * 1000)
 
             await uow.tokenRepository.updateResetToken(
                 user._id.toString(),
@@ -86,19 +106,12 @@ class AuthService {
                 expiresAt
             )
 
-            await uow.commit()
-            return resetToken // Gửi email reset password với token này
-        } catch (error) {
-            await uow.rollback()
-            throw error
-        }
+            return resetToken
+        })
     }
 
     async resetPassword(token: string, newPassword: string) {
-        const uow = new UnitOfWork()
-        await uow.start()
-
-        try {
+        return uowWrapper(async (uow) => {
             const tokenData = await uow.tokenRepository.findByResetToken(token)
             if (!tokenData) throw new Error('Invalid or expired token')
 
@@ -108,12 +121,7 @@ class AuthService {
                 hashedPassword
             )
             await uow.tokenRepository.deleteResetToken(token)
-
-            await uow.commit()
-        } catch (error) {
-            await uow.rollback()
-            throw error
-        }
+        })
     }
 }
 
@@ -124,7 +132,9 @@ class AuthError extends Error {
         super(message)
         this.name = 'AuthError'
         this.statusCode = statusCode
+
+        if (Error.captureStackTrace) {
+            Error.captureStackTrace(this, AuthError)
+        }
     }
 }
-
-export default new AuthService()

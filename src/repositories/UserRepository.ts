@@ -9,7 +9,10 @@ export class UserRepository {
     }
 
     async findByEmail(email: string) {
-        return User.findOne({ email }).session(this.session as any)
+        return User.findOne({ email })
+            .select('+password')
+            .lean()
+            .session(this.session as any)
     }
 
     async findById(userId: string) {
@@ -17,9 +20,11 @@ export class UserRepository {
     }
 
     async createUser(email: string, password: string, role: string = 'user') {
-        return User.create([{ email, password, role }], {
+        const [user] = await User.create([{ email, password, role }], {
             session: this.session as any,
         })
+        return user
+        // Using array because mongoose require array in transactions
     }
 
     async updatePassword(userId: string, newPassword: string) {

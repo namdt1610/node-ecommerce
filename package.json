@@ -3,7 +3,9 @@
     "version": "1.0.0",
     "main": "src/index.ts",
     "scripts": {
-        "start": "nodemon -r tsconfig-paths/register src/index.ts"
+        "dev": "nodemon cross-env NODE_ENV=development -r tsconfig-paths/register src/index.ts",
+        "buid": "tsc",
+        "start": "nodemon cross-env NODE_ENV=production -r tsconfig-paths/register dist/index.js"
     },
     "author": "",
     "license": "ISC",
