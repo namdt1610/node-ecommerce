@@ -3,9 +3,9 @@
     "version": "1.0.0",
     "main": "src/index.ts",
     "scripts": {
-        "dev": "nodemon cross-env NODE_ENV=development -r tsconfig-paths/register src/index.ts",
+        "dev": "cross-env NODE_ENV=development nodemon -r tsconfig-paths/register src/index.ts",
         "buid": "tsc",
-        "start": "nodemon cross-env NODE_ENV=production -r tsconfig-paths/register dist/index.js"
+        "start": "cross-env NODE_ENV=production -r tsconfig-paths/register dist/index.js"
     },
     "author": "",
     "license": "ISC",
@@ -47,6 +47,7 @@
         "@types/node": "^22.8.4",
         "@types/nodemailer": "^6.4.17",
         "@types/validator": "^13.12.2",
+        "cross-env": "^7.0.3",
         "eslint": "^9.13.0",
         "eslint-config-prettier": "^9.1.0",
         "eslint-plugin-prettier": "^5.2.1",
