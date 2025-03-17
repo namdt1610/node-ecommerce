@@ -8,6 +8,14 @@ const TokenSchema = new mongoose.Schema({
     },
     token: { type: String, required: true, unique: true },
     expiresAt: { type: Date, required: true },
+    otp: {
+        type: String,
+        required: false,
+    },
+    otpExpiresAt: {
+        type: Date,
+        required: false,
+    },
 })
 
 export const Token = mongoose.model('Token', TokenSchema)

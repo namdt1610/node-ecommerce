@@ -1,21 +1,15 @@
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
-import User from '@/models/UserModel'
 import redis from '@/config/redis'
-import { UserRepository } from '@/repositories/UserRepository'
 import crypto from 'crypto'
-import { sendResetEmail } from '@/utils/sendEmail'
-import { UnitOfWork } from '@/repositories/unitOfWork'
+import { sendResetEmail, sendOtpEmail } from '@/utils/sendEmail'
 import { uowWrapper } from '@/utils/uowWrapper'
+import Role from '@/models/RoleModel'
 
 const ACCESS_TOKEN_EXPIRES = '15m'
 const REFRESH_TOKEN_EXPIRES = 60 * 60 * 24 * 7
 
 export class AuthService {
-    // constructor(private readonly uow: UnitOfWork) {
-    //     this.uow = uow
-    // }
-
     generateAccessToken(userId: string) {
         return jwt.sign({ userId }, process.env.ACCESS_SECRET as string, {
             expiresIn: ACCESS_TOKEN_EXPIRES,
@@ -98,13 +92,20 @@ export class AuthService {
             if (!user) throw new Error('User not found')
 
             const resetToken = crypto.randomBytes(32).toString('hex')
-            const expiresAt = new Date(Date.now() + 30 * 60 * 1000)
+            const expiresAt = new Date(Date.now() + 10 * 60 * 1000)
 
             await uow.tokenRepository.updateResetToken(
                 user._id.toString(),
                 resetToken,
                 expiresAt
             )
+
+            const resetUrl = `${process.env.CLIENT_URL}/reset-password?token=${resetToken}`
+            if (process.env.NODE_ENV === 'development') {
+                console.log(`Reset token for ${email}: ${resetToken}`)
+                console.log(`Reset URL: ${resetUrl}`)
+            }
+            await sendResetEmail(user.email, resetUrl)
 
             return resetToken
         })
@@ -121,6 +122,106 @@ export class AuthService {
                 hashedPassword
             )
             await uow.tokenRepository.deleteResetToken(token)
+        })
+    }
+
+    // Add to AuthService class
+    async requestOtpReset(email: string) {
+        return uowWrapper(async (uow) => {
+            const user = await uow.userRepository.findByEmail(email)
+            if (!user) throw new Error('User not found')
+
+            // Generate 6-digit OTP
+            const otp = Math.floor(100000 + Math.random() * 900000).toString()
+            const expiresAt = new Date(Date.now() + 10 * 60 * 1000) // 10 minutes
+
+            await uow.tokenRepository.updateOtp(
+                user._id.toString(),
+                otp,
+                expiresAt
+            )
+
+            // For testing, print the OTP to console
+            if (process.env.NODE_ENV === 'development') {
+                console.log(`OTP for ${email}: ${otp}`)
+            }
+
+            // In production, you'd send this via SMS or email
+            // await sendOtp(user.email, otp);
+
+            try {
+                await sendOtpEmail(user.email, otp)
+            } catch (error) {
+                console.error('Failed to send OTP email:', error)
+                // Continue anyway since we logged the OTP in dev mode
+            }
+
+            return { userId: user._id, message: 'OTP generated successfully' }
+        })
+    }
+
+    async verifyOtpAndResetPassword(
+        email: string,
+        otp: string,
+        newPassword: string
+    ) {
+        return uowWrapper(async (uow) => {
+            const user = await uow.userRepository.findByEmail(email)
+            if (!user) throw new Error('User not found')
+
+            const isValid = await uow.tokenRepository.verifyOtp(
+                user._id.toString(),
+                otp
+            )
+            if (!isValid) throw new Error('Invalid or expired OTP')
+
+            const hashedPassword = await bcrypt.hash(newPassword, 10)
+            await uow.userRepository.updatePassword(
+                user._id.toString(),
+                hashedPassword
+            )
+
+            await uow.tokenRepository.clearOtp(user._id.toString())
+
+            return { message: 'Password reset successful' }
+        })
+    }
+
+    async changePermission(
+        userId: string,
+        roleId: string,
+        permissions: string[]
+    ) {
+        return uowWrapper(async (uow) => {
+            // Verify user exists
+            const user = await uow.userRepository.findById(userId)
+            if (!user) throw new Error('User not found')
+
+            // Change user's role if roleId is provided
+            if (roleId) {
+                const role = await Role.findById(roleId)
+                if (!role) throw new Error('Role not found')
+
+                // Update user's role
+                user.role = role._id
+                await user.save()
+            }
+
+            // If permissions are provided, update the permissions of the role
+            if (permissions && permissions.length > 0) {
+                // Get the user's current role
+                const userRole = await Role.findById(user.role)
+                if (!userRole) throw new Error('Role not found')
+
+                // Update role permissions
+                userRole.permissions = permissions
+                await userRole.save()
+            }
+
+            return {
+                message: 'User permissions updated successfully',
+                user: { id: user._id, email: user.email },
+            }
         })
     }
 }

@@ -1,179 +1,144 @@
-import { Request, Response } from 'express'
-import Order from '../models/OrderModel'
-import Inventory from '../models/InventoryModel'
-import InventoryActivity from '../models/InventoryActivityModel'
-import mongoose from 'mongoose'
-import User from '../models/UserModel'
-import { sendEmail } from '../utils/sendEmail'
-import { UnitOfWork } from '@/repositories/unitOfWork'
-import { OrderService } from '@/services/orderService'
+import { NextFunction, Request, Response } from 'express'
+import { OrderService } from '@/services/OrderService'
 
-const orderService = new OrderService()
+// filepath: c:\Users\Apple\Documents\GitHub\mern\server\src\controllers\OrderController.ts
 
-export const OrderController = {
-    getAllOrders: async (req: Request, res: Response): Promise<void> => {
+class OrderController {
+    private orderService: OrderService
+
+    constructor() {
+        this.orderService = new OrderService()
+        this.getOrderById = this.getOrderById.bind(this)
+        this.getAllOrders = this.getAllOrders.bind(this)
+        this.getUserOrders = this.getUserOrders.bind(this)
+        this.createOrder = this.createOrder.bind(this)
+        this.updateOrder = this.updateOrder.bind(this)
+        this.updateOrderStatus = this.updateOrderStatus.bind(this)
+        this.deleteOrder = this.deleteOrder.bind(this)
+    }
+
+    async getOrderById(
+        req: Request,
+        res: Response,
+        next: NextFunction
+    ): Promise<void> {
         try {
-            const cacheKey = 'orders:all'
-
-            const orders = await Order.find().populate('user', 'name')
-            console.log('Orders: ', orders)
-            res.status(200).json(orders)
-        } catch (error: any) {
-            res.status(500).json({
-                success: false,
-                message: 'Error fetching orders',
-                error: error.message,
-            })
-            return
-        }
-    },
-
-    getOrderById: async (req: Request, res: Response): Promise<void> => {
-        try {
-            const id = req.params.id
-
-            const order = await Order.findById(req.params.id).populate({
-                path: 'user',
-                select: 'name phone email',
-            })
-            console.log('Oder: ', order)
-            if (!order) {
-                res.status(404).json({
-                    success: false,
-                    message: 'Order not found',
-                })
-                return
-            }
-            res.status(200).json(order)
-        } catch (error: any) {
-            res.status(500).json({
-                success: false,
-                message: 'Error fetching order',
-                error: error.message,
-            })
-            return
-        }
-    },
-
-    getOrdersByUserId: async (req: Request, res: Response): Promise<void> => {
-        try {
-            const id = req.params.id
-
-            const orders = await Order.find({ id }).populate({
-                path: 'user',
-                select: 'name phone email',
-            })
-            if (!orders) {
-                res.status(404).json({ message: 'Orders not found' })
-                return
-            }
-
-            res.status(200).json(orders)
+            const orderId = req.params.id
+            const order = await this.orderService.findOrderById(orderId)
+            res.json(order)
         } catch (error) {
-            res.status(500).json({
-                success: false,
-                message: 'Error fetching orders',
-                error,
-            })
-            return
+            next(error)
         }
-    },
+    }
 
-    createOrder: async (req: Request, res: Response) => {
-        const uow = new UnitOfWork()
-        await uow.start()
-
+    async getOrdersByUserId(
+        req: Request,
+        res: Response,
+        next: NextFunction
+    ): Promise<void> {
         try {
-            const userId = req.body.user
-            const order = await orderService.createOrder(userId, req.body, uow)
-
-            await uow.commit()
-            res.status(201).json({
-                success: true,
-                message: 'Order created successfully!',
-                order,
-            })
-        } catch (error: any) {
-            await uow.rollback()
-            res.status(500).json({ success: false, message: error.message })
+            const userId = req.params.id
+            const page = parseInt(req.query.page as string) || 1
+            const limit = parseInt(req.query.limit as string) || 10
+            
+            const result = await this.orderService.getUserOrders(userId, page, limit)
+            res.json(result)
+        } catch (error) {
+            next(error)
         }
-    },
+    }
 
-    updateOrder: async (req: Request, res: Response): Promise<void> => {
+    async getAllOrders(
+        req: Request,
+        res: Response,
+        next: NextFunction
+    ): Promise<void> {
         try {
-            const id = req.params.id
-            const updatedOrder = await Order.findByIdAndUpdate(
-                id,
-                { $set: req.body },
-                { new: true }
-            )
-            if (!updatedOrder) {
-                res.status(404).json({
-                    success: false,
-                    message: 'Order not found',
-                })
-            }
-
-            res.status(200).json({
-                success: true,
-                message: 'Order updated successfully',
-                updatedOrder,
-            })
-        } catch (error: any) {
-            res.status(500).json({
-                success: false,
-                message: 'Error updating order',
-                error: error.message,
-            })
+            const page = parseInt(req.query.page as string) || 1
+            const limit = parseInt(req.query.limit as string) || 10
+            const filters = req.query.filters ? JSON.parse(req.query.filters as string) : {}
+            
+            const result = await this.orderService.getAllOrders(page, limit, filters)
+            res.json(result)
+        } catch (error) {
+            next(error)
         }
-    },
+    }
 
-    updateOrderStatus: async (req: Request, res: Response): Promise<void> => {
+    async getUserOrders(
+        req: Request,
+        res: Response,
+        next: NextFunction
+    ): Promise<void> {
         try {
-            const id = req.params.id
-            const updatedOrder = await Order.findByIdAndUpdate(
-                id,
-                { $set: { status: req.body.status } },
-                { new: true }
-            )
-            if (!updatedOrder) {
-                res.status(404).json({ message: 'Order not found' })
-            }
-
-            res.status(200).json({
-                success: true,
-                message: 'Order status updated successfully',
-                updatedOrder,
-            })
-        } catch (error: any) {
-            res.status(500).json({
-                success: false,
-                message: 'Error updating order status',
-                error: error.message,
-            })
+            const userId = req.params.userId
+            const page = parseInt(req.query.page as string) || 1
+            const limit = parseInt(req.query.limit as string) || 10
+            
+            const result = await this.orderService.getUserOrders(userId, page, limit)
+            res.json(result)
+        } catch (error) {
+            next(error)
         }
-    },
+    }
 
-    deleteOrder: async (req: Request, res: Response): Promise<void> => {
+    async createOrder(
+        req: Request,
+        res: Response,
+        next: NextFunction
+    ): Promise<void> {
         try {
-            const id = req.params.id
-            const deletedOrder = await Order.findByIdAndDelete(id)
-            if (!deletedOrder) {
-                res.status(404).json({ message: 'Order not found' })
-            }
-
-            res.status(200).json({
-                success: true,
-                message: 'Order deleted successfully',
-            })
-        } catch (error: any) {
-            res.status(500).json({
-                success: false,
-                message: 'Error deleting order',
-                error: error.message,
-            })
+            const orderData = req.body
+            const newOrder = await this.orderService.createOrder(orderData)
+            res.status(201).json(newOrder)
+        } catch (error) {
+            next(error)
         }
-    },
+    }
+
+    async updateOrder(
+        req: Request,
+        res: Response,
+        next: NextFunction
+    ): Promise<void> {
+        try {
+            const orderId = req.params.id
+            const updateData = req.body
+            const updatedOrder = await this.orderService.updateOrder(orderId, updateData)
+            res.json(updatedOrder)
+        } catch (error) {
+            next(error)
+        }
+    }
+
+    async updateOrderStatus(
+        req: Request,
+        res: Response,
+        next: NextFunction
+    ): Promise<void> {
+        try {
+            const orderId = req.params.id
+            const { status } = req.body
+            const updatedOrder = await this.orderService.updateOrderStatus(orderId, status)
+            res.json(updatedOrder)
+        } catch (error) {
+            next(error)
+        }
+    }
+
+    async deleteOrder(
+        req: Request,
+        res: Response,
+        next: NextFunction
+    ): Promise<void> {
+        try {
+            const orderId = req.params.id
+            const result = await this.orderService.deleteOrder(orderId)
+            res.json(result)
+        } catch (error) {
+            next(error)
+        }
+    }
 }
 
-export default OrderController
+export default new OrderController()

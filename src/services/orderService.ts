@@ -1,62 +1,121 @@
-import { UnitOfWork } from '@/repositories/unitOfWork'
-import Order from '@/models/OrderModel'
-import Inventory from '@/models/InventoryModel'
-import User from '@/models/UserModel'
-import { sendEmail } from '@/utils/sendEmail'
+import { sendOrderConfirmationEmail } from '@/utils/sendEmail'
+import { uowWrapper } from '@/utils/uowWrapper'
+
+// filepath: c:\Users\Apple\Documents\GitHub\mern\server\src\services\OrderService.ts
 
 export class OrderService {
-    async createOrder(userId: string, orderData: any, uow: UnitOfWork) {
-        const { items, ...orderDetails } = orderData
-        if (!items || !Array.isArray(items) || items.length === 0) {
-            throw new Error('Order must contain at least one item')
-        }
-
-        // Lấy danh sách sản phẩm để kiểm tra tồn kho
-        const productIds = items.map((item) => item.product)
-        const inventories = await Inventory.find({
-            product: { $in: productIds },
+    async findOrderById(orderId: string) {
+        return uowWrapper(async (uow) => {
+            const order = await uow.orderRepository.findById(orderId)
+            if (!order) throw new OrderError('Order not found', 404)
+            return order
         })
+    }
 
-        // Kiểm tra tồn kho
-        for (const item of items) {
-            const inventory = inventories.find(
-                (inv) => inv.product.toString() === item.product
+    async getAllOrders(page = 1, limit = 10, filters = {}) {
+        return uowWrapper(async (uow) => {
+            const orders = await uow.orderRepository.findAll(
+                page,
+                limit,
+                filters
             )
-            if (!inventory || inventory.quantity < item.quantity) {
-                throw new Error(
-                    `Insufficient stock for product ${item.product}`
-                )
-            }
-        }
-
-        // Cập nhật tồn kho
-        await Inventory.bulkWrite(
-            items.map((item) => ({
-                updateOne: {
-                    filter: { product: item.product },
-                    update: { $inc: { quantity: -item.quantity } },
+            const total = await uow.orderRepository.countOrders(filters)
+            return {
+                orders,
+                pagination: {
+                    total,
+                    page,
+                    limit,
+                    pages: Math.ceil(total / limit),
                 },
-            }))
-        )
-
-        // Tạo đơn hàng
-        const order = new Order(orderDetails)
-        await order.save
-
-        // Gửi email xác nhận
-        const emailSubject = 'Order Confirmation'
-        const emailText = `Thank you for your order! Your order ID is ${order._id}.`
-        const emailHtml = `
-            <h1>Thank you for your order!</h1>
-            <p>Your order ID is <strong>${order._id}</strong>.</p>
-        `
-        await sendEmail(orderData.email, emailSubject, emailText, emailHtml)
-
-        // Xóa sản phẩm đã mua khỏi giỏ hàng
-        await User.findByIdAndUpdate(userId, {
-            $pull: { cart: { productId: { $in: productIds } } },
+            }
         })
+    }
 
-        return order
+    async getUserOrders(userId: string, page = 1, limit = 10) {
+        return uowWrapper(async (uow) => {
+            const orders = await uow.orderRepository.findByUser(
+                userId,
+                page,
+                limit
+            )
+            const total = await uow.orderRepository.countOrders({
+                user: userId,
+            })
+            return {
+                orders,
+                pagination: {
+                    total,
+                    page,
+                    limit,
+                    pages: Math.ceil(total / limit),
+                },
+            }
+        })
+    }
+
+    async createOrder(orderData: any) {
+        return uowWrapper(async (uow) => {
+            // Add any business logic/validation here
+            const order = await uow.orderRepository.createOrder(orderData)
+            await sendOrderConfirmationEmail(
+                order.user.email,
+                order._id,
+                order.items,
+                order.totalPrice
+            )
+
+            return order
+        })
+    }
+
+    async updateOrder(orderId: string, updateData: any) {
+        return uowWrapper(async (uow) => {
+            const order = await uow.orderRepository.findById(orderId)
+            if (!order) throw new OrderError('Order not found', 404)
+
+            const updatedOrder = await uow.orderRepository.updateOrder(
+                orderId,
+                updateData
+            )
+            return updatedOrder
+        })
+    }
+
+    async updateOrderStatus(orderId: string, status: string) {
+        return uowWrapper(async (uow) => {
+            const order = await uow.orderRepository.findById(orderId)
+            if (!order) throw new OrderError('Order not found', 404)
+
+            const updatedOrder = await uow.orderRepository.updateOrderStatus(
+                orderId,
+                status
+            )
+            return updatedOrder
+        })
+    }
+
+    async deleteOrder(orderId: string) {
+        return uowWrapper(async (uow) => {
+            const order = await uow.orderRepository.findById(orderId)
+            if (!order) throw new OrderError('Order not found', 404)
+
+            await uow.orderRepository.deleteOrder(orderId)
+            return { message: 'Order deleted successfully' }
+        })
+    }
+}
+
+class OrderError extends Error {
+    statusCode: number
+
+    constructor(message: string, statusCode = 400) {
+        super(message)
+        this.name = 'OrderError'
+        this.statusCode = statusCode
+
+        if (Error.captureStackTrace) {
+            Error.captureStackTrace(this, OrderError)
+        }
     }
 }

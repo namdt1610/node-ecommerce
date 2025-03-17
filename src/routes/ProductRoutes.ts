@@ -1,26 +1,20 @@
-import { Router } from 'express'
-import {
-    createProduct,
-    deleteProduct,
-    getAllProducts,
-    getProductById,
-    updateClickCount,
-    updateProduct,
-    getActiveProducts,
-} from '../controllers/ProductController'
-import { decodeToken } from '../middlewares/jwtDecode'
-import { isAuthorized } from '../middlewares/isAuthenticated'
+import express from 'express'
+import ProductController from '@/controllers/ProductController'
+import verifyToken from '@/middlewares/verifyToken'
+import { isAdmin } from '@/middlewares/isAdmin'
 
-const router = Router()
+const router = express.Router()
 
-router.get('/active', getActiveProducts)
-router.get('/:id', getProductById)
-router.patch('/:id/click', updateClickCount)
+// Public routes
+router.get('/active', ProductController.getActiveProducts)
+router.get('/:id', ProductController.getProductById)
+router.patch('/:id/click', ProductController.updateClickCount)
 
-router.get('/', decodeToken, isAuthorized(['admin', 'user']), getAllProducts)
-router.post('/', decodeToken, isAuthorized(['admin']), createProduct)
-router.delete('/:id', decodeToken, isAuthorized(['admin']), deleteProduct)
-router.patch('/:id', decodeToken, isAuthorized(['admin']), updateProduct)
+// Protected routes
+router.get('/', verifyToken, ProductController.getAllProducts)
+router.post('/', verifyToken, isAdmin, ProductController.createProduct)
+router.delete('/:id', verifyToken, isAdmin, ProductController.deleteProduct)
+router.patch('/:id', verifyToken, isAdmin, ProductController.updateProduct)
 
 export default router
 

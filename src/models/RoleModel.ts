@@ -1,6 +1,7 @@
 import mongoose, { Document, Schema } from 'mongoose'
 
 export interface IRole extends Document {
+    _id: Schema.Types.ObjectId
     name: string
     permissions: string[]
 }

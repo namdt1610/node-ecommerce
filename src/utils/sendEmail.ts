@@ -1,50 +1,147 @@
 import nodemailer from 'nodemailer'
 
-const transporter = nodemailer.createTransport({
-    service: 'gmail', // or use 'smtp.mailtrap.io' for testing
-    auth: {
-        user: process.env.EMAIL_USER, // Your email address
-        pass: process.env.EMAIL_PASSWORD, // Your email password or app-specific password
-    },
-})
+// Don't create transporter during module load
+export async function sendResetEmail(to: string, resetUrl: string) {
+    // Log what we see here
+    console.log('Send email environment check:', {
+        host: process.env.MAIL_HOST,
+        user: process.env.MAIL_USER ? '***exists***' : 'missing',
+    })
 
-export const sendResetEmail = async (email: string, token: string) => {
-    const resetLink = `http://localhost:3000/reset-password?token=${token}`
+    // Create transporter when function is called
+    const transporter = nodemailer.createTransport({
+        host: process.env.MAIL_HOST,
+        port: parseInt(process.env.MAIL_PORT || '587'),
+        secure: process.env.MAIL_PORT === '465',
+        auth: {
+            user: process.env.MAIL_USER,
+            pass: process.env.MAIL_PASS,
+        },
+    })
 
+    // Rest of your email sending code
     const mailOptions = {
-        from: process.env.EMAIL_USER,
-        to: email,
-        subject: 'Reset mật khẩu',
+        from: process.env.MAIL_FROM,
+        to,
+        subject: 'Password Reset Request',
         html: `
-            <p>Chào bạn,</p>
-            <p>Bạn đã yêu cầu đặt lại mật khẩu. Nhấn vào link bên dưới để tiếp tục:</p>
-            <a href="${resetLink}">${resetLink}</a>
-            <p>Nếu bạn không yêu cầu, hãy bỏ qua email này.</p>
-        `,
-    }
-
-    await transporter.sendMail(mailOptions)
-}
-
-export const sendEmail = async (
-    to: string,
-    subject: string,
-    text: string,
-    html?: string
-) => {
-    const mailOptions = {
-        from: process.env.EMAIL_USER, // Sender address
-        to, // Receiver address
-        subject,
-        text,
-        html,
+      <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: 0 auto;">
+        <h2>Password Reset Request</h2>
+        <p>Hello,</p>
+        <p>We received a request to reset your password. Click the button below to create a new password:</p>
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${resetUrl}" style="background-color: #4CAF50; color: white; padding: 12px 20px; text-decoration: none; border-radius: 4px; font-weight: bold;">Reset Password</a>
+        </div>
+        <p>This link will expire in 10 minutes.</p>
+        <p>If you didn't request a password reset, please ignore this email.</p>
+        <p>Regards,<br>Your App Team</p>
+      </div>
+    `,
     }
 
     try {
-        await transporter.sendMail(mailOptions)
-        console.log('Email sent successfully')
+        const info = await transporter.sendMail(mailOptions)
+        console.log('Email sent: ' + info.messageId)
+        return true
     } catch (error) {
         console.error('Error sending email:', error)
-        throw error
+        throw new Error('Failed to send reset email')
+    }
+}
+
+export async function sendOtpEmail(to: string, otp: string) {
+    console.log('Send OTP email environment check:', {
+        host: process.env.MAIL_HOST,
+        user: process.env.MAIL_USER ? '***exists***' : 'missing',
+    })
+
+    // Create transporter when function is called
+    const transporter = nodemailer.createTransport({
+        host: process.env.MAIL_HOST,
+        port: parseInt(process.env.MAIL_PORT || '587'),
+        secure: process.env.MAIL_PORT === '465',
+        auth: {
+            user: process.env.MAIL_USER,
+            pass: process.env.MAIL_PASS,
+        },
+    })
+
+    const mailOptions = {
+        from: process.env.MAIL_FROM,
+        to,
+        subject: 'Your Password Reset OTP',
+        html: `
+      <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: 0 auto;">
+        <h2>Password Reset OTP</h2>
+        <p>Hello,</p>
+        <p>We received a request to reset your password. Use the following OTP code to reset your password:</p>
+        <div style="text-align: center; margin: 30px 0;">
+          <p style="font-size: 32px; font-weight: bold; letter-spacing: 5px; padding: 10px; background-color: #f5f5f5; border-radius: 5px;">${otp}</p>
+        </div>
+        <p>This OTP will expire in 10 minutes.</p>
+        <p>If you didn't request a password reset, please ignore this email.</p>
+        <p>Regards,<br>Your App Team</p>
+      </div>
+    `,
+    }
+
+    try {
+        const info = await transporter.sendMail(mailOptions)
+        console.log('OTP Email sent: ' + info.messageId)
+        return true
+    } catch (error) {
+        console.error('Error sending OTP email:', error)
+        throw new Error('Failed to send OTP email')
+    }
+}
+
+export async function sendOrderConfirmationEmail(
+    to: string,
+    orderId: string,
+    items: any[]
+) {
+    console.log('Send order confirmation email environment check:', {
+        host: process.env.MAIL_HOST,
+        user: process.env.MAIL_USER ? '***exists***' : 'missing',
+    })
+
+    // Create transporter when function is called
+    const transporter = nodemailer.createTransport({
+        host: process.env.MAIL_HOST,
+        port: parseInt(process.env.MAIL_PORT || '587'),
+        secure: process.env.MAIL_PORT === '465',
+        auth: {
+            user: process.env.MAIL_USER,
+            pass: process.env.MAIL_PASS,
+        },
+    })
+
+    const itemList = items
+        .map((item) => `<li>${item.productId} (x${item.quantity})</li>`)
+        .join('')
+
+    const mailOptions = {
+        from: process.env.MAIL_FROM,
+        to,
+        subject: 'Order Confirmation',
+        html: `
+      <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: 0 auto;">
+        <h2>Order Confirmation</h2>
+        <p>Thank you for your order! Your order ID is ${orderId}.</p>
+        <p>Items in your order:</p>
+        <ul>${itemList}</ul>
+        <p>If you have any questions, feel free to contact us.</p>
+        <p>Regards,<br>Your App Team</p>
+      </div>
+    `,
+    }
+
+    try {
+        const info = await transporter.sendMail(mailOptions)
+        console.log('Order confirmation email sent: ' + info.messageId)
+        return true
+    } catch (error) {
+        console.error('Error sending order confirmation email:', error)
+        throw new Error('Failed to send order confirmation email')
     }
 }

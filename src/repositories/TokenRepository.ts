@@ -25,4 +25,33 @@ export class TokenRepository {
     async deleteResetToken(token: string) {
         return Token.deleteOne({ token }).session(this.session as any)
     }
+
+    async updateOtp(userId: string, otp: string, expiresAt: Date) {
+        return await Token.findOneAndUpdate(
+            { userId },
+            {
+                userId,
+                otp,
+                otpExpiresAt: expiresAt,
+            },
+            { upsert: true }
+        )
+    }
+
+    async verifyOtp(userId: string, otp: string) {
+        const token = await Token.findOne({
+            userId,
+            otp,
+            otpExpiresAt: { $gt: new Date() },
+        })
+
+        return !!token
+    }
+
+    async clearOtp(userId: string) {
+        return await Token.findOneAndUpdate(
+            { userId },
+            { $unset: { otp: 1, otpExpiresAt: 1 } }
+        )
+    }
 }

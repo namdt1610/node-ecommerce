@@ -8,6 +8,16 @@ class AuthController {
 
     constructor() {
         this.authService = new AuthService()
+        this.register = this.register.bind(this)
+        this.login = this.login.bind(this)
+        this.refreshToken = this.refreshToken.bind(this)
+        this.logout = this.logout.bind(this)
+        this.requestPasswordReset = this.requestPasswordReset.bind(this)
+        this.resetPassword = this.resetPassword.bind(this)
+        this.requestOtpReset = this.requestOtpReset.bind(this)
+        this.verifyOtpAndResetPassword =
+            this.verifyOtpAndResetPassword.bind(this)
+        this.changePermission = this.changePermission.bind(this)
     }
 
     async register(
@@ -109,24 +119,96 @@ class AuthController {
         req: Request,
         res: Response,
         next: NextFunction
-    ) {
+    ): Promise<void> {
         try {
             await this.authService.requestPasswordReset(req.body.email)
-            return res.json({ message: 'Email reset password đã được gửi!' })
+            res.json({ message: 'Email reset password has been sent!' })
+            return
         } catch (error) {
             next(error)
         }
     }
 
-    async resetPassword(req: Request, res: Response, next: NextFunction) {
+    async requestOtpReset(
+        req: Request,
+        res: Response,
+        next: NextFunction
+    ): Promise<void> {
         try {
-            const { token, newPassword } = req.body
-            await this.authService.resetPassword(token, newPassword)
-            return res.json({ message: 'Mật khẩu đã được đặt lại thành công!' })
+            const { email } = req.body
+            await this.authService.requestOtpReset(email)
+            res.json({ message: 'OTP has been sent' })
         } catch (error) {
             next(error)
         }
     }
+
+    async verifyOtpAndResetPassword(
+        req: Request,
+        res: Response,
+        next: NextFunction
+    ): Promise<void> {
+        try {
+            const { email, otp, newPassword } = req.body
+            await this.authService.verifyOtpAndResetPassword(
+                email,
+                otp,
+                newPassword
+            )
+            res.json({ message: 'Password reset successful' })
+        } catch (error) {
+            next(error)
+        }
+    }
+
+    async resetPassword(
+        req: Request,
+        res: Response,
+        next: NextFunction
+    ): Promise<void> {
+        try {
+            const { token, newPassword } = req.body
+            await this.authService.resetPassword(token, newPassword)
+            res.json({ message: 'Password has bent reset successfully!' })
+            return
+        } catch (error) {
+            next(error)
+        }
+    }
+
+    async changePermission(
+        req: Request,
+        res: Response,
+        next: NextFunction
+    ): Promise<void> {
+        try {
+            const { userId, roleId, permissions } = req.body
+            await this.authService.changePermission(userId, roleId, permissions)
+            res.json({ message: 'Permissions updated successfully' })
+        } catch (error) {
+            next(error)
+        }
+    }
+
+    // async createSuperUser(req: Request, res: Response, next: NextFunction): Promise<void> {
+    //     try {
+    //         const { email, password, name } = req.body;
+
+    //         const superUser = await this.authService.createUserWithRole(
+    //             email,
+    //             password,
+    //             name,
+    //             'admin'
+    //         );
+
+    //         res.status(201).json({
+    //             message: 'Superuser created successfully',
+    //             user: { id: superUser._id, email: superUser.email, name: superUser.name }
+    //         });
+    //     } catch (error) {
+    //         next(error);
+    //     }
+    // }
 }
 
 export default new AuthController()

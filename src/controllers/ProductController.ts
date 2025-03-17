@@ -1,186 +1,128 @@
-import { Request, Response } from 'express'
-import mongoose from 'mongoose'
-import Product from '../models/ProductModel'
+// filepath: c:\Users\Apple\Documents\GitHub\mern\server\src\controllers\ProductController.ts
+import { NextFunction, Request, Response } from 'express'
+import { ProductService } from '@/services/ProductService'
 
-// GET all products
-const getAllProducts = async (req: Request, res: Response): Promise<void> => {
-    try {
-        const products = await Product.find({}).sort({ name: 1 })
-        res.status(200).json(products)
-    } catch (error) {
-        res.status(500).json({
-            message: 'Server Error: Unable to get products',
-            error: (error as Error).message,
-        })
-    }
-}
+class ProductController {
+    private productService: ProductService
 
-// GET active products (for client)
-export const getActiveProducts = async (
-    req: Request,
-    res: Response
-): Promise<void> => {
-    try {
-        const products = await Product.find({ isActive: true }).sort({
-            name: 1,
-        })
-        res.status(200).json(products)
-    } catch (error) {
-        res.status(500).json({
-            message: 'Server Error: Unable to get products',
-            error: (error as Error).message,
-        })
-    }
-}
-
-// GET a product by id
-const getProductById = async (req: Request, res: Response): Promise<void> => {
-    const { id } = req.params
-
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-        res.status(404).json({ error: 'Invalid product id' })
-        return
-    }
-    const product = await Product.findById(id).populate('category')
-
-    if (!product) {
-        res.status(404).json({ message: `Product with id ${id} not found` })
-        return
+    constructor() {
+        this.productService = new ProductService()
+        this.getAllProducts = this.getAllProducts.bind(this)
+        this.getActiveProducts = this.getActiveProducts.bind(this)
+        this.getProductById = this.getProductById.bind(this)
+        this.createProduct = this.createProduct.bind(this)
+        this.updateProduct = this.updateProduct.bind(this)
+        this.deleteProduct = this.deleteProduct.bind(this)
+        this.updateClickCount = this.updateClickCount.bind(this)
     }
 
-    res.status(200).json(product)
-}
-
-// POST a product
-const createProduct = async (req: Request, res: Response): Promise<void> => {
-    const { name, category, description, price } = req.body
-    const imageUrl = req.body?.filename ? `/uploads${req.body.filename}` : null
-
-    // Kiểm tra sản phẩm đã tồn tại
-    if (await Product.findOne({ name })) {
-        res.status(400).json({
-            message: 'Validation error',
-            errors: { name: 'Product already exists' },
-        })
-        return
-    }
-
-    // Kiểm tra các trường bị thiếu
-    let errors: Record<string, string> = {}
-    if (!name) errors.name = 'Name is required'
-    if (!category) errors.category = 'Category is required'
-    if (!description) errors.description = 'Description is required'
-    if (!price) errors.price = 'Price is required'
-
-    if (Object.keys(errors).length > 0) {
-        res.status(400).json({
-            message: 'Validation error',
-            errors,
-        })
-        return
-    }
-
-    // Tạo sản phẩm mới
-    try {
-        const product = await Product.create({
-            name,
-            category,
-            description,
-            price,
-            imageUrl,
-        })
-        res.status(201).json(product)
-    } catch (error) {
-        res.status(500).json({
-            message: 'Server error',
-            errors: { general: (error as Error).message },
-        })
-    }
-}
-
-// DELETE a product by id
-const deleteProduct = async (req: Request, res: Response): Promise<void> => {
-    const { id } = req.params
-
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-        res.status(400).json({ error: 'Invalid product id' })
-        return
-    }
-
-    const product = await Product.findOneAndDelete({ _id: id })
-
-    if (!product) {
-        res.status(400).json({ error: `Product with id ${id} not found` })
-        return
-    }
-
-    res.status(200).json(product)
-}
-
-// UPDATE a product by id
-const updateProduct = async (req: Request, res: Response): Promise<void> => {
-    try {
-        const { id } = req.params
-        console.log('id', id)
-
-        if (!mongoose.Types.ObjectId.isValid(id)) {
-            console.log('Invalid product id')
-            res.status(404).json({ error: 'Invalid product id' })
-            return
+    async getAllProducts(
+        req: Request,
+        res: Response,
+        next: NextFunction
+    ): Promise<void> {
+        try {
+            const products = await this.productService.getProducts()
+            res.status(200).json(products)
+        } catch (error) {
+            next(error)
         }
+    }
 
-        const product = await Product.findOneAndUpdate(
-            { _id: id },
-            {
-                ...req.body,
-            },
-            { new: true }
-        )
-
-        if (!product) {
-            res.status(400).json({ error: `Product with id ${id} not found` })
-            return
+    async getActiveProducts(
+        req: Request,
+        res: Response,
+        next: NextFunction
+    ): Promise<void> {
+        try {
+            const products = await this.productService.getActiveProducts()
+            res.status(200).json(products)
+        } catch (error) {
+            next(error)
         }
+    }
 
-        res.status(200).json(product)
-    } catch (error: any) {
-        console.error(error)
-        res.status(500).json({
-            message: 'Failed to update product',
-            error: error.message,
-        })
+    async getProductById(
+        req: Request,
+        res: Response,
+        next: NextFunction
+    ): Promise<void> {
+        try {
+            const { id } = req.params
+            const product = await this.productService.getProductById(id)
+            res.status(200).json(product)
+        } catch (error) {
+            next(error)
+        }
+    }
+
+    async createProduct(
+        req: Request,
+        res: Response,
+        next: NextFunction
+    ): Promise<void> {
+        try {
+            const productData = req.body
+            if (req.body?.filename) {
+                productData.images = [`/uploads${req.body.filename}`]
+            }
+            const product = await this.productService.createProduct(productData)
+            res.status(201).json(product)
+        } catch (error) {
+            next(error)
+        }
+    }
+
+    async updateProduct(
+        req: Request,
+        res: Response,
+        next: NextFunction
+    ): Promise<void> {
+        try {
+            const { id } = req.params
+            const productData = req.body
+            const product = await this.productService.updateProduct(
+                id,
+                productData
+            )
+            res.status(200).json(product)
+        } catch (error) {
+            next(error)
+        }
+    }
+
+    async deleteProduct(
+        req: Request,
+        res: Response,
+        next: NextFunction
+    ): Promise<void> {
+        try {
+            const { id } = req.params
+            await this.productService.deleteProduct(id)
+            res.status(200).json({ message: 'Product deleted successfully' })
+        } catch (error) {
+            next(error)
+        }
+    }
+
+    async updateClickCount(
+        req: Request,
+        res: Response,
+        next: NextFunction
+    ): Promise<void> {
+        try {
+            const { id } = req.params
+            // First fetch the current product
+            const currentProduct = await this.productService.getProductById(id)
+            // Then update with the incremented click count
+            const product = await this.productService.updateProduct(id, {
+                clickCount: (currentProduct.clickCount || 0) + 1,
+            })
+            res.status(200).json(product)
+        } catch (error) {
+            next(error)
+        }
     }
 }
 
-// Update click count
-export const updateClickCount = async (
-    req: Request,
-    res: Response
-): Promise<void> => {
-    const { id } = req.params
-
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-        res.status(404).json({ error: 'Invalid product id' })
-        return
-    }
-
-    const product = await Product.findById(id)
-
-    if (!product) {
-        res.status(404).json({ error: `Product with id ${id} not found` })
-        return
-    }
-
-    product.clickCount += 1
-    await product.save()
-
-    res.status(200).json(product)
-}
-
-export {
-    createProduct,
-    getAllProducts,
-    getProductById,
-    deleteProduct,
-    updateProduct,
-}
+export default new ProductController()

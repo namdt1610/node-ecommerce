@@ -1,152 +1,83 @@
-import { Request, Response } from 'express'
-import Order from '../models/OrderModel'
-import Product from '../models/ProductModel'
-import User from '../models/UserModel'
-import Category from '../models/CategoryModel'
+import { NextFunction, Request, Response } from 'express'
+import { DashboardService } from '@/services/DashboardService'
 
-export const getDashboardStats = async (
-    req: Request,
-    res: Response
-): Promise<void> => {
-    try {
-        // Get current date and date 30 days ago
-        const today = new Date()
-        const thirtyDaysAgo = new Date(
-            today.getTime() - 30 * 24 * 60 * 60 * 1000
-        )
-        // Basic stats
-        const [
-            totalOrders,
-            totalProducts,
-            totalUsers,
-            totalCategories,
-            recentOrders,
-            topProducts,
-            salesData,
-            categoryStats,
-        ] = await Promise.all([
-            // Total counts
-            Order.countDocuments(),
-            Product.countDocuments(),
-            User.countDocuments(),
-            Category.countDocuments(),
-
-            // Recent orders
-            Order.find()
-                .sort({ createdAt: -1 })
-                .limit(5)
-                .populate('user', 'name email')
-                .populate('orderItems.product', 'name price'),
-
-            // Top selling products
-            Product.find()
-                .sort({ soldCount: -1 })
-                .limit(5)
-                .select('name price soldCount clickCount'),
-
-            // Sales data for last 30 days
-            Order.aggregate([
-                {
-                    $match: {
-                        createdAt: { $gte: thirtyDaysAgo },
-                    },
-                },
-                {
-                    $group: {
-                        _id: {
-                            $dateToString: {
-                                format: '%Y-%m-%d',
-                                date: '$createdAt',
-                            },
-                        },
-                        sales: { $sum: '$totalAmount' },
-                        orders: { $sum: 1 },
-                    },
-                },
-                {
-                    $sort: { _id: 1 },
-                },
-            ]),
-
-            // Category statistics
-            Category.aggregate([
-                {
-                    $lookup: {
-                        from: 'products',
-                        localField: '_id',
-                        foreignField: 'category',
-                        as: 'products',
-                    },
-                },
-                {
-                    $project: {
-                        name: 1,
-                        productCount: { $size: '$products' },
-                        totalSales: {
-                            $sum: {
-                                $map: {
-                                    input: '$products',
-                                    as: 'product',
-                                    in: {
-                                        $multiply: [
-                                            '$$product.price',
-                                            '$$product.soldCount',
-                                        ],
-                                    },
-                                },
-                            },
-                        },
-                    },
-                },
-                {
-                    $sort: { totalSales: -1 },
-                },
-            ]),
-        ])
-
-        // Calculate revenue metrics
-        const totalRevenue = await Order.aggregate([
-            {
-                $group: {
-                    _id: null,
-                    total: { $sum: '$totalAmount' },
-                },
-            },
-        ])
-
-        const monthlyRevenue = await Order.aggregate([
-            {
-                $match: {
-                    createdAt: { $gte: thirtyDaysAgo },
-                },
-            },
-            {
-                $group: {
-                    _id: null,
-                    total: { $sum: '$totalAmount' },
-                },
-            },
-        ])
-        res.json({
-            stats: {
-                totalOrders,
-                totalProducts,
-                totalUsers,
-                totalCategories,
-                totalRevenue: totalRevenue[0]?.total || 0,
-                monthlyRevenue: monthlyRevenue[0]?.total || 0,
-            },
-            recentOrders,
-            topProducts,
-            salesData,
-            categoryStats,
-        })
-    } catch (error) {
-        console.error('Dashboard Stats Error:', error)
-        res.status(500).json({
-            success: false,
-            message: 'Error fetching dashboard statistics',
-            error: (error as Error).message,
-        })
+// filepath: c:\Users\Apple\Documents\GitHub\mern\server\src\controllers\DashboardController.ts
+interface UserRequest extends Request {
+    user?: {
+        userId: string
     }
 }
+
+class DashboardController {
+    private dashboardService: DashboardService
+
+    constructor() {
+        this.dashboardService = new DashboardService()
+        this.getUserStats = this.getUserStats.bind(this)
+        this.getSystemMetrics = this.getSystemMetrics.bind(this)
+        this.getRecentActivity = this.getRecentActivity.bind(this)
+        this.getDashboardSummary = this.getDashboardSummary.bind(this)
+    }
+
+    async getUserStats(
+        req: UserRequest,
+        res: Response,
+        next: NextFunction
+    ): Promise<void> {
+        try {
+            const userId = req.params.userId || (req.user as any)?.userId
+            const stats = await this.dashboardService.getUserStats(userId)
+            res.json(stats)
+        } catch (error) {
+            next(error)
+        }
+    }
+
+    async getSystemMetrics(
+        req: Request,
+        res: Response,
+        next: NextFunction
+    ): Promise<void> {
+        try {
+            const metrics = await this.dashboardService.getSystemMetrics()
+            res.json(metrics)
+        } catch (error) {
+            next(error)
+        }
+    }
+
+    async getRecentActivity(
+        req: UserRequest,
+        res: Response,
+        next: NextFunction
+    ): Promise<void> {
+        try {
+            const userId = req.params.userId || (req.user as any)?.userId
+            const limit = parseInt(req.query.limit as string) || 10
+            const activities = await this.dashboardService.getRecentActivity(
+                userId,
+                limit
+            )
+            res.json(activities)
+        } catch (error) {
+            next(error)
+        }
+    }
+
+    async getDashboardSummary(
+        req: UserRequest,
+        res: Response,
+        next: NextFunction
+    ): Promise<void> {
+        try {
+            const userId = req.params.userId || (req.user as any)?.userId
+            const summary =
+                await this.dashboardService.getDashboardSummary(userId)
+            res.json(summary)
+        } catch (error) {
+            next(error)
+        }
+    }
+}
+
+export default new DashboardController()

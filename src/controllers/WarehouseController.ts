@@ -1,120 +1,93 @@
-import { Request, Response } from 'express'
-import mongoose from 'mongoose'
-import Warehouse from '../models/WarehouseModel'
+import { NextFunction, Request, Response } from 'express'
+import { WarehouseService } from '@/services/WarehouseService'
 
 class WarehouseController {
-    async getAllWarehouses(req: Request, res: Response): Promise<void> {
-        try {
-            const warehouses = await Warehouse.find()
+    private warehouseService: WarehouseService
 
+    constructor() {
+        this.warehouseService = new WarehouseService()
+        this.getAllWarehouses = this.getAllWarehouses.bind(this)
+        this.getWarehouseById = this.getWarehouseById.bind(this)
+        this.createWarehouse = this.createWarehouse.bind(this)
+        this.updateWarehouse = this.updateWarehouse.bind(this)
+        this.deleteWarehouse = this.deleteWarehouse.bind(this)
+    }
+
+    async getAllWarehouses(
+        req: Request,
+        res: Response,
+        next: NextFunction
+    ): Promise<void> {
+        try {
+            const warehouses = await this.warehouseService.findAll()
             res.status(200).json(warehouses)
         } catch (error: any) {
-            res.status(500).json({
-                success: false,
-                message: 'Failed to fetch warehouses',
-                error: error.message,
-            })
+            next(error)
         }
     }
 
-    async getWarehouseById(req: Request, res: Response): Promise<void> {
+    async getWarehouseById(
+        req: Request,
+        res: Response,
+        next: NextFunction
+    ): Promise<void> {
         try {
             const { warehouseId } = req.params
-            const warehouse = await Warehouse.findById(warehouseId)
-            if (!warehouse) {
-                res.status(404).json({ error: 'Warehouse not found' })
-                return
-            }
-
+            const warehouse = await this.warehouseService.findById(warehouseId)
             res.status(200).json({ success: true, warehouse })
         } catch (error: any) {
-            res.status(500).json({
-                success: false,
-                message: 'Failed to fetch warehouse',
-                error: error.message,
-            })
+            next(error)
         }
     }
 
-    async createWarehouse(req: Request, res: Response): Promise<void> {
+    async createWarehouse(
+        req: Request,
+        res: Response,
+        next: NextFunction
+    ): Promise<void> {
         try {
-            const warehouse = await Warehouse.create(req.body)
-
+            const warehouse = await this.warehouseService.create(req.body)
             res.status(201).json({
                 success: true,
                 message: 'Create warehouse successfully',
                 warehouse,
             })
         } catch (error: any) {
-            res.status(400).json({
-                success: false,
-                message: 'Failed to create warehouse',
-                error: error.message,
-            })
+            next(error)
         }
     }
 
-    async updateWarehouse(req: Request, res: Response): Promise<void> {
+    async updateWarehouse(
+        req: Request,
+        res: Response,
+        next: NextFunction
+    ): Promise<void> {
         try {
             const { warehouseId } = req.params
-            const warehouse = await Warehouse.findByIdAndUpdate(
+            const warehouse = await this.warehouseService.update(
                 warehouseId,
-                req.body,
-                {
-                    new: true,
-                    runValidators: true,
-                }
+                req.body
             )
-            if (!warehouse) {
-                res.status(404).json({ error: 'Warehouse not found' })
-                return
-            }
-
             res.status(200).json({ success: true, warehouse })
         } catch (error: any) {
-            res.status(500).json({
-                success: false,
-                message: 'Failed to update warehouse',
-                error: error.message,
-            })
+            next(error)
         }
     }
 
-    async deleteWarehouse(req: Request, res: Response): Promise<void> {
+    async deleteWarehouse(
+        req: Request,
+        res: Response,
+        next: NextFunction
+    ): Promise<void> {
         try {
             const { warehouseId } = req.params
-            const warehouse = await Warehouse.findByIdAndDelete(warehouseId)
-            if (!warehouse) {
-                res.status(404).json({ error: 'Warehouse not found' })
-                return
-            }
-
+            await this.warehouseService.delete(warehouseId)
             res.status(200).json({
                 success: true,
                 message: 'Delete warehouse successfully',
             })
         } catch (error: any) {
-            res.status(500).json({
-                success: false,
-                message: 'Failed to delete warehouse',
-                error: error.message,
-            })
-        }
-    }
-
-    async deleteAllWarehouses(req: Request, res: Response): Promise<void> {
-        try {
-            await Warehouse.deleteMany({})
-            res.status(200).json({
-                success: true,
-                message: 'Delete all warehouses successfully',
-            })
-        } catch (error: any) {
-            res.status(500).json({
-                success: false,
-                message: 'Failed to delete all warehouses',
-                error: error.message,
-            })
+            next(error)
         }
     }
 }

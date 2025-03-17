@@ -1,17 +1,21 @@
 import express from 'express'
-import * as uc from '../controllers/UserController'
+import UserController from '@/controllers/UserController'
 import verifyToken from '@/middlewares/verifyToken'
-import isAdmin from '@/middlewares/isAdmin'
+import { isAdmin } from '@/middlewares/isAdmin'
 
 const router = express.Router()
 
-// User routes (yêu cầu xác thực)
-router.get('/', uc.getAllUsers)
-router.get('/:id', verifyToken, isAdmin, uc.getUserById)
-// router.put('/:id', ac.verifyToken, ac.checkRole(['admin']), uc.updateUser)
-// router.delete('/:id', ac.verifyToken, ac.checkRole(['admin']), uc.deleteUser)
-// router.get('/favorites/:id', ac.verifyToken, uc.getFavoritesById)
-// router.post('/favorites', ac.verifyToken, uc.addToFavorites)
+// Public routes
+router.get('/', UserController.getAllUsers)
+
+// Protected routes
+router.get('/:id', verifyToken, isAdmin, UserController.getUser)
+router.put('/:id', verifyToken, isAdmin, UserController.updateUser)
+router.delete('/:id', verifyToken, isAdmin, UserController.deleteUser)
+
+// Favorites routes
+router.get('/favorites/:id', verifyToken, UserController.getUserFavorites)
+router.post('/favorites', verifyToken, UserController.addProductToFavorites)
 
 export default router
 

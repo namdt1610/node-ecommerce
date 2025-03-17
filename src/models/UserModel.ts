@@ -6,7 +6,7 @@ interface IFavorite {
 }
 
 export interface IUser extends Document {
-    _id: Schema.Types.ObjectId
+    _id: string
     avatar?: string
     status: 'active' | 'inactive'
     name: string
@@ -15,6 +15,8 @@ export interface IUser extends Document {
     password: string
     role: Schema.Types.ObjectId | IRole
     favorites: IFavorite[]
+    updatedAt: Date
+    createdAt: Date
     resetPasswordToken?: string
     resetPasswordExpires?: Date
 }

@@ -1,15 +1,32 @@
 import { Request, Response, NextFunction } from 'express'
+import User from '@/models/UserModel'
+import { IRole } from '@/models/RoleModel'
 
-const isAdmin = (req: Request, res: Response, next: NextFunction): void => {
-    const user = (req as any).user
-    const userIdFromParams = req.params.id
+export const isAdmin = async (
+    req: any,
+    res: Response,
+    next: NextFunction
+): Promise<void> => {
+    try {
+        // req.user is set by verifyToken middleware
+        if (!req.user) {
+            res.status(401).json({ message: 'Unauthorized' })
+            return
+        }
 
-    if (user.role === 'admin' || user.userId === userIdFromParams) {
+        const user = await User.findById(req.user.id).populate<{ role: IRole }>(
+            'role'
+        )
+
+        if (!user || user.role.name !== 'admin') {
+            res.status(403).json({
+                message: 'Access denied. Admin role required.',
+            })
+            return
+        }
+
         next()
-    } else {
-        res.status(403).json({ message: 'Forbidden: No Permission' })
-        return
+    } catch (error) {
+        res.status(500).json({ message: 'Server error' })
     }
 }
-
-export default isAdmin

@@ -1,28 +1,23 @@
 import express from 'express'
-import { getDashboardStats } from '../controllers/DashboardController'
+import DashboardController from '@/controllers/DashboardController'
+import verifyToken from '@/middlewares/verifyToken'
+import { isAdmin } from '@/middlewares/isAdmin'
 
 const router = express.Router()
 
-router.get('/stats', getDashboardStats)
+// Dashboard routes
+router.get('/summary', verifyToken, DashboardController.getDashboardSummary)
+router.get('/user-stats', verifyToken, DashboardController.getUserStats)
+router.get(
+    '/system-metrics',
+    verifyToken,
+    isAdmin,
+    DashboardController.getSystemMetrics
+)
+router.get(
+    '/recent-activity',
+    verifyToken,
+    DashboardController.getRecentActivity
+)
 
 export default router
-
-/**
- * @swagger
- * /api/dashboard/stats:
- *   get:
- *     summary: Get dashboard statistics
- *     tags: [Dashboard]
- *     responses:
- *       200:
- *         description: Success
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 totalOrders:
- *                   type: number
- *                 totalRevenue:
- *                   type: number
- */

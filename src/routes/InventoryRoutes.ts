@@ -1,21 +1,37 @@
 import express from 'express'
-import inventoryController from '../controllers/InventoryController'
+import InventoryController from '@/controllers/InventoryController'
+import verifyToken from '@/middlewares/verifyToken'
+import { isAdmin } from '@/middlewares/isAdmin'
 
 const router = express.Router()
 
 // Activity route should come before dynamic routes
-router.get('/activity', inventoryController.getActivities)
+router.get('/activity', verifyToken, InventoryController.getActivities)
 
 // Stock management routes
-router.post('/:productId/add', inventoryController.addStock)
-router.post('/:productId/remove', inventoryController.removeStock)
+router.post('/:productId/add', verifyToken, InventoryController.addStock)
+router.post('/:productId/remove', verifyToken, InventoryController.removeStock)
 
 // Inventory management routes
-router.post('/', inventoryController.createInventory)
-router.get('/', inventoryController.getAllInventory)
-router.get('/:productId', inventoryController.getInventoryByProductId)
-router.put('/:productId', inventoryController.updateInventory)
-router.delete('/:productId', inventoryController.deleteInventory)
+router.post('/', verifyToken, isAdmin, InventoryController.createInventory)
+router.get('/', verifyToken, InventoryController.getAllInventory)
+router.get(
+    '/:productId',
+    verifyToken,
+    InventoryController.getInventoryByProductId
+)
+router.put(
+    '/:productId',
+    verifyToken,
+    isAdmin,
+    InventoryController.updateInventory
+)
+router.delete(
+    '/:productId',
+    verifyToken,
+    isAdmin,
+    InventoryController.deleteInventory
+)
 
 export default router
 

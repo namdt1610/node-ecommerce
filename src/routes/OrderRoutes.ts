@@ -1,28 +1,35 @@
 import express from 'express'
-import orderController from '@/controllers/OrderController'
+import OrderController from '@/controllers/OrderController'
+import verifyToken from '@/middlewares/verifyToken'
+import { isAdmin } from '@/middlewares/isAdmin'
 
 const router = express.Router()
 
 // Create new order
-router.post('/', orderController.createOrder)
+router.post('/', verifyToken, OrderController.createOrder)
 
-// Get all orders
-router.get('/', orderController.getAllOrders)
+// Get all orders - admin only
+router.get('/', verifyToken, isAdmin, OrderController.getAllOrders)
+
+// Get orders by user ID - user can see their own orders
+router.get('/user/:id', verifyToken, OrderController.getOrdersByUserId)
 
 // Get single order by ID
-router.get('/:id', orderController.getOrderById)
+router.get('/:id', verifyToken, OrderController.getOrderById)
 
-// Get orders by user ID
-router.get('/user/:id', orderController.getOrdersByUserId)
+// Update order - admin only
+router.put('/:id', verifyToken, isAdmin, OrderController.updateOrder)
 
-// Update order
-router.put('/:id', orderController.updateOrder)
+// Update order status - admin only
+router.patch(
+    '/:id/status',
+    verifyToken,
+    isAdmin,
+    OrderController.updateOrderStatus
+)
 
-// Update order status
-router.patch('/:id/status', orderController.updateOrderStatus)
-
-// Delete order
-router.delete('/:id', orderController.deleteOrder)
+// Delete order - admin only
+router.delete('/:id', verifyToken, isAdmin, OrderController.deleteOrder)
 
 export default router
 

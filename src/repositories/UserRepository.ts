@@ -27,6 +27,12 @@ export class UserRepository {
         // Using array because mongoose require array in transactions
     }
 
+    async updateUser(userId: string, updateData: any) {
+        return User.findByIdAndUpdate(userId, updateData, {
+            new: true,
+        }).session(this.session as any)
+    }
+
     async updatePassword(userId: string, newPassword: string) {
         return User.updateOne(
             { _id: userId },
@@ -36,5 +42,30 @@ export class UserRepository {
 
     async deleteUser(userId: string) {
         return User.deleteOne({ _id: userId }).session(this.session as any)
+    }
+
+    async countTotal() {
+        return User.countDocuments().session(this.session as any)
+    }
+
+    async countActive() {
+        return User.countDocuments({ isActive: true }).session(
+            this.session as any
+        )
+    }
+
+    async getUserFavorites(userId: string) {
+        return User.findById(userId)
+            .select('favorites')
+            .populate('favorites')
+            .session(this.session as any)
+    }
+
+    async addToFavorites(userId: string, productId: string) {
+        return User.findByIdAndUpdate(
+            userId,
+            { $addToSet: { favorites: productId } },
+            { new: true }
+        ).session(this.session as any)
     }
 }

@@ -4,8 +4,9 @@
     "main": "src/index.ts",
     "scripts": {
         "dev": "cross-env NODE_ENV=development nodemon -r tsconfig-paths/register src/index.ts",
-        "buid": "tsc",
-        "start": "cross-env NODE_ENV=production -r tsconfig-paths/register dist/index.js"
+        "build": "tsc",
+        "start": "cross-env NODE_ENV=production nodemon -r tsconfig-paths/register src/index.ts",
+        "create-superuser": "ts-node -r tsconfig-paths/register src/scripts/createSuperUser.ts"
     },
     "author": "",
     "license": "ISC",
