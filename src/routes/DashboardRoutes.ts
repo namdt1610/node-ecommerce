@@ -14,10 +14,10 @@ router.get(
     isAdmin,
     DashboardController.getSystemMetrics
 )
-router.get(
-    '/recent-activity',
-    verifyToken,
-    DashboardController.getRecentActivity
-)
+// router.get(
+//     '/recent-activity',
+//     verifyToken,
+//     DashboardController.getRecentActivity
+// )
 
 export default router

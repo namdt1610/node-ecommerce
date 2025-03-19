@@ -46,7 +46,6 @@ const userSchema = new Schema<IUser>(
         role: {
             type: Schema.Types.ObjectId,
             ref: 'Role',
-            required: true,
         },
         favorites: [
             {
@@ -59,6 +58,21 @@ const userSchema = new Schema<IUser>(
     },
     { timestamps: true }
 )
+
+userSchema.pre('save', async function (next) {
+    if (!this.role) {
+        const defaultRole = await mongoose
+            .model('Role')
+            .findOne({ name: 'user' })
+        if (!defaultRole) {
+            throw new Error(
+                "Default role 'user' not found. Please add it to the database."
+            )
+        }
+        this.role = defaultRole._id
+    }
+    next()
+})
 
 const User = mongoose.model<IUser, IUserModel>('User', userSchema)
 export default User

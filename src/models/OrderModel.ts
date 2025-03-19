@@ -1,18 +1,73 @@
 import mongoose, { Schema, Document } from 'mongoose'
-import { Order } from '../../../client/src/types/Order'
+import { IUser } from './UserModel'
 
-// export interface IOrder extends Document{
-//     _id: string
-// }
+export interface OrderItems {
+    product: string
+    image: string
+    name: string
+    quantity: number
+    price: number
+}
 
-const orderSchema = new Schema<Order>(
+export interface IOrder {
+    _id: string
+    user: IUser
+    items: OrderItems[]
+    shippingAddress: {
+        address: string
+        ward: string
+        district: string
+        province: string
+    }
+    paymentMethod: string
+    paymentResult?: {
+        _id?: string
+        status?: string
+        update_time?: string
+        email_address?: string
+    } | null
+    itemsPrice: number
+    taxPrice: number
+    shippingPrice: number
+    totalPrice: number
+    status: string
+    isPaid: boolean
+    paidAt?: Date
+    isDelivered: boolean
+    deliveredAt?: Date
+    createdAt: Date
+}
+
+export interface CreateOrderRequest {
+    user: string
+    orderItems: Array<{
+        name: string
+        quantity: number
+        image: string
+        price: number
+        product: string
+    }>
+    shippingAddress: {
+        address: string
+        ward: string
+        district: string
+        province: string
+    }
+    paymentMethod: string
+    itemsPrice: number
+    taxPrice: number
+    shippingPrice: number
+    totalPrice: number
+}
+
+const orderSchema = new Schema<IOrder>(
     {
         user: {
             type: String,
             required: true,
             ref: 'User',
         },
-        orderItems: [
+        items: [
             {
                 product: { type: String, required: true, ref: 'Product' },
                 image: { type: String },
@@ -91,6 +146,6 @@ const orderSchema = new Schema<Order>(
     }
 )
 
-const Order = mongoose.model<Order>('Order', orderSchema)
+const Order = mongoose.model<IOrder>('Order', orderSchema)
 
 export default Order

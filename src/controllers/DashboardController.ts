@@ -15,7 +15,7 @@ class DashboardController {
         this.dashboardService = new DashboardService()
         this.getUserStats = this.getUserStats.bind(this)
         this.getSystemMetrics = this.getSystemMetrics.bind(this)
-        this.getRecentActivity = this.getRecentActivity.bind(this)
+        // this.getRecentActivity = this.getRecentActivity.bind(this)
         this.getDashboardSummary = this.getDashboardSummary.bind(this)
     }
 
@@ -46,23 +46,23 @@ class DashboardController {
         }
     }
 
-    async getRecentActivity(
-        req: UserRequest,
-        res: Response,
-        next: NextFunction
-    ): Promise<void> {
-        try {
-            const userId = req.params.userId || (req.user as any)?.userId
-            const limit = parseInt(req.query.limit as string) || 10
-            const activities = await this.dashboardService.getRecentActivity(
-                userId,
-                limit
-            )
-            res.json(activities)
-        } catch (error) {
-            next(error)
-        }
-    }
+    // async getRecentActivity(
+    //     req: UserRequest,
+    //     res: Response,
+    //     next: NextFunction
+    // ): Promise<void> {
+    //     try {
+    //         const userId = req.params.userId || (req.user as any)?.userId
+    //         const limit = parseInt(req.query.limit as string) || 10
+    //         const activities = await this.dashboardService.getRecentActivity(
+    //             userId,
+    //             limit
+    //         )
+    //         res.json(activities)
+    //     } catch (error) {
+    //         next(error)
+    //     }
+    // }
 
     async getDashboardSummary(
         req: UserRequest,

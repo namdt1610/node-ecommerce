@@ -19,8 +19,8 @@ export class UserRepository {
         return User.findById(userId).session(this.session as any)
     }
 
-    async createUser(email: string, password: string, role: string = 'user') {
-        const [user] = await User.create([{ email, password, role }], {
+    async createUser(email: string, password: string) {
+        const [user] = await User.create([{ email, password }], {
             session: this.session as any,
         })
         return user

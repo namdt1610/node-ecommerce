@@ -65,7 +65,7 @@ class UserController {
                     throw new Error('User with this email already exists')
                 }
 
-                return uow.userRepository.createUser(email, password, role)
+                return uow.userRepository.createUser(email, password)
             })
 
             res.status(201).json(newUser)

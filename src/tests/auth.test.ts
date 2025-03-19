@@ -4,17 +4,19 @@ import jwt from 'jsonwebtoken'
 import app from '../app'
 import User from '../models/UserModel'
 import { Token } from '../models/TokenModel'
+import Role from '../models/RoleModel'
 
 // Mock data
 const testUser = {
-    email: 'test@example.com',
-    password: 'Password123!',
+    email: 'user@gmail.com',
+    password: 'user',
 }
 
+// Define adminUser without the role initially
 const adminUser = {
-    email: 'admin@example.com',
-    password: 'Admin123!',
-    role: 'admin',
+    email: 'nam.dt161@gmail.com',
+    password: 'trueadmin123',
+    role: '',
 }
 
 let userAccessToken: string
@@ -26,20 +28,25 @@ let otpCode: string
 
 // Setup and teardown
 beforeAll(async () => {
+    jest.setTimeout(30000) // Set timeout for all tests
     // Connect to test database
-    await mongoose.connect(
-        process.env.MONGODB_URI_TEST || 'mongodb://localhost:27017/test-db'
-    )
+    await mongoose.connect(process.env.MONGO_URI as string)
+    console.log('Connected to test database')
 
     // Clear test data
     await User.deleteMany({})
     await Token.deleteMany({})
 
+    let adminRole = await Role.findOne({ name: 'admin' })
+    if (!adminRole) {
+        adminRole = await Role.create({ name: 'admin' })
+    }
+
     // Create admin user for permission tests
     const admin = new User({
         email: adminUser.email,
         password: adminUser.password,
-        role: 'admin',
+        role: adminRole._id,
     })
     await admin.save()
 })

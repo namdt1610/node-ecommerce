@@ -47,17 +47,17 @@ export class DashboardService {
         })
     }
 
-    async getRecentActivity(userId: string, limit: number = 10) {
-        return uowWrapper(async (uow) => {
-            // This would fetch recent user activity from your activity log
-            // Placeholder implementation
-            const activities = await uow.activityRepository.findByUserId(
-                userId,
-                limit
-            )
-            return activities
-        })
-    }
+    // async getRecentActivity(userId: string, limit: number = 10) {
+    //     return uowWrapper(async (uow) => {
+    //         // This would fetch recent user activity from your activity log
+    //         // Placeholder implementation
+    //         const activities = await uow.activityRepository.findByUserId(
+    //             userId,
+    //             limit
+    //         )
+    //         return activities
+    //     })
+    // }
 
     async getDashboardSummary(userId: string) {
         return uowWrapper(async (uow) => {

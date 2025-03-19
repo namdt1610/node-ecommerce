@@ -98,7 +98,8 @@ export async function sendOtpEmail(to: string, otp: string) {
 export async function sendOrderConfirmationEmail(
     to: string,
     orderId: string,
-    items: any[]
+    items: any[],
+    totalPrice: number
 ) {
     console.log('Send order confirmation email environment check:', {
         host: process.env.MAIL_HOST,
@@ -130,6 +131,8 @@ export async function sendOrderConfirmationEmail(
         <p>Thank you for your order! Your order ID is ${orderId}.</p>
         <p>Items in your order:</p>
         <ul>${itemList}</ul>
+        <p>Total Price: $${totalPrice.toFixed(2)}</p>
+        <p>Your order will be processed shortly. You will receive another email once your order has shipped.</p>
         <p>If you have any questions, feel free to contact us.</p>
         <p>Regards,<br>Your App Team</p>
       </div>
