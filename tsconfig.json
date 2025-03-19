@@ -1,5 +1,8 @@
 {
     "compilerOptions": {
+        "experimentalDecorators": true,
+        "emitDecoratorMetadata": true,
+        "strictPropertyInitialization": false,
         "module": "CommonJS",
         "target": "ES2023",
         "esModuleInterop": true,

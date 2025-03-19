@@ -7,10 +7,8 @@ class CartController {
 
     constructor() {
         this.cartService = new CartService()
-        // Bind methods to ensure 'this' context
         this.getCart = this.getCart.bind(this)
         this.addToCart = this.addToCart.bind(this)
-        // Bind other methods
         this.updateCartItem = this.updateCartItem.bind(this)
         this.removeFromCart = this.removeFromCart.bind(this)
         this.clearCart = this.clearCart.bind(this)

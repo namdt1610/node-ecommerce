@@ -5,7 +5,6 @@ import { isAdmin } from '@/middlewares/isAdmin'
 
 const router = express.Router()
 
-// Auth routes
 router.post('/login', AuthController.login)
 router.post('/register', AuthController.register)
 router.get('/refresh', AuthController.refreshToken)

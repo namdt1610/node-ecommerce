@@ -51,7 +51,7 @@ class AuthController {
                 sameSite: 'strict',
                 maxAge: 7 * 24 * 60 * 60 * 1000,
             })
-            res.json({ message: 'Log in successfully!', user, accessToken })
+            res.json({ message: 'Log in successfully', user, accessToken })
         } catch (error: any) {
             next(error)
         }
@@ -155,7 +155,7 @@ class AuthController {
                 otp,
                 newPassword
             )
-            res.json({ message: 'Password reset successful' })
+            res.json({ message: 'Password reset successfully' })
         } catch (error) {
             next(error)
         }
@@ -169,7 +169,7 @@ class AuthController {
         try {
             const { token, newPassword } = req.body
             await this.authService.resetPassword(token, newPassword)
-            res.json({ message: 'Password has bent reset successfully!' })
+            res.json({ message: 'Password has bent reset successfully' })
             return
         } catch (error) {
             next(error)
@@ -189,26 +189,6 @@ class AuthController {
             next(error)
         }
     }
-
-    // async createSuperUser(req: Request, res: Response, next: NextFunction): Promise<void> {
-    //     try {
-    //         const { email, password, name } = req.body;
-
-    //         const superUser = await this.authService.createUserWithRole(
-    //             email,
-    //             password,
-    //             name,
-    //             'admin'
-    //         );
-
-    //         res.status(201).json({
-    //             message: 'Superuser created successfully',
-    //             user: { id: superUser._id, email: superUser.email, name: superUser.name }
-    //         });
-    //     } catch (error) {
-    //         next(error);
-    //     }
-    // }
 }
 
 export default new AuthController()
