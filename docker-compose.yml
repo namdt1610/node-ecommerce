@@ -1,0 +1,53 @@
+version: '3.8'
+name: apple-project
+
+services:
+    # PostgreSQL Database
+    postgres:
+        image: postgres:17-alpine
+        container_name: apple_db
+        restart: unless-stopped
+        environment:
+            POSTGRES_DB: apple
+            POSTGRES_USER: namdt
+            POSTGRES_PASSWORD: namdt2003
+            POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+            - '5433:5432'
+        volumes:
+            - postgres_data:/var/lib/postgresql/data
+            - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+        networks:
+            - apple-network
+        healthcheck:
+            test: ['CMD-SHELL', 'pg_isready -U namdt -d apple']
+            interval: 10s
+            timeout: 5s
+            retries: 5
+
+    # Redis (optional - for caching/sessions)
+    redis:
+        image: redis:7-alpine
+        container_name: apple-redis
+        restart: unless-stopped
+        ports:
+            - '6379:6379'
+        volumes:
+            - redis_data:/data
+        networks:
+            - apple-network
+        healthcheck:
+            test: ['CMD', 'redis-cli', 'ping']
+            interval: 10s
+            timeout: 5s
+            retries: 5
+
+volumes:
+    postgres_data:
+        driver: local
+    redis_data:
+        driver: local
+
+networks:
+    apple-network:
+        driver: bridge

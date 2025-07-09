@@ -1,0 +1,19 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.JwtRefreshTokenService = void 0;
+const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
+class JwtRefreshTokenService {
+    generate(userId) {
+        const secret = process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET;
+        if (!secret) {
+            throw new Error('JWT_REFRESH_SECRET or JWT_SECRET environment variable is required');
+        }
+        return jsonwebtoken_1.default.sign({ userId }, secret, {
+            expiresIn: '7d',
+        });
+    }
+}
+exports.JwtRefreshTokenService = JwtRefreshTokenService;

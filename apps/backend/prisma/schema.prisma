@@ -1,0 +1,282 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Role {
+  id          String       @id @default(cuid())
+  name        String       @unique
+  description String?
+  permissions Permission[]
+  users       User[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@map("roles")
+}
+
+model Permission {
+  id       String @id @default(cuid())
+  resource String
+  action   String
+  roleId   String
+  role     Role   @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([resource, action, roleId])
+  @@map("permissions")
+}
+
+model User {
+  id                   String    @id @default(cuid())
+  avatar               String?
+  status               Status    @default(ACTIVE)
+  name                 String    @default("New User")
+  email                String    @unique
+  username             String?   @unique
+  password             String
+  roleId               String
+  role                 Role      @relation(fields: [roleId], references: [id])
+  favorites            String[]  @default([])
+  resetPasswordToken   String?
+  resetPasswordExpires DateTime?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+  
+  // Relations
+  orders   Order[]
+  reviews  Review[]
+  cartItems CartItem[]
+
+  @@map("users")
+}
+
+model Category {
+  id          String    @id @default(cuid())
+  name        String    @unique
+  slug        String    @unique
+  description String?
+  imageUrl    String?
+  isActive    Boolean   @default(true)
+  products    Product[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@map("categories")
+}
+
+model Product {
+  id               String             @id @default(cuid())
+  name             String
+  slug             String             @unique
+  brand            String?
+  model            String?
+  sku              String?            @unique
+  description      String?
+  shortDescription String?
+  price            Float
+  originalPrice    Float?
+  discount         Float?             @default(0)
+  currency         String             @default("USD")
+  categoryId       String
+  category         Category           @relation(fields: [categoryId], references: [id])
+  subCategoryId    String?
+  productType      ProductType        @default(SMARTPHONE)
+  condition        ProductCondition   @default(NEW)
+  status           ProductStatus      @default(ACTIVE)
+  images           Json?              @default("[]")
+  videos           Json?              @default("[]")
+  attributes       Json?              @default("[]")
+  specifications   Json?              @default("[]")
+  variants         Json?              @default("[]")
+  inventory        Json?              @default("{}")
+  seo              Json?              @default("{}")
+  ratings          Json?              @default("{}")
+  tags             String[]           @default([])
+  isActive         Boolean            @default(true)
+  isFeatured       Boolean            @default(false)
+  isDigital        Boolean            @default(false)
+  weight           Float?
+  dimensions       Json?
+  shippingInfo     Json?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+
+  // Relations
+  productDetails ProductDetails?
+  reviews        Review[]
+  orderItems     OrderItem[]
+  cartItems      CartItem[]
+  inventories    Inventory[]
+
+  @@map("products")
+}
+
+model ProductDetails {
+  id          String      @id @default(cuid())
+  productId   String      @unique
+  product     Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productType ProductType
+  details     Json        // Stores the detailed product specifications based on type
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@map("product_details")
+}
+
+model Warehouse {
+  id          String      @id @default(cuid())
+  name        String      @unique
+  address     String
+  description String?
+  inventories Inventory[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@map("warehouses")
+}
+
+model Inventory {
+  id          String                @id @default(cuid())
+  productId   String
+  product     Product               @relation(fields: [productId], references: [id])
+  warehouseId String
+  warehouse   Warehouse             @relation(fields: [warehouseId], references: [id])
+  quantity    Int                   @default(0)
+  minStock    Int                   @default(0)
+  maxStock    Int                   @default(1000)
+  activities  InventoryActivity[]
+  createdAt   DateTime              @default(now())
+  updatedAt   DateTime              @updatedAt
+
+  @@unique([productId, warehouseId])
+  @@map("inventories")
+}
+
+model InventoryActivity {
+  id          String               @id @default(cuid())
+  inventoryId String
+  inventory   Inventory            @relation(fields: [inventoryId], references: [id])
+  type        InventoryActivityType @default(ADJUSTMENT)
+  quantity    Int
+  reason      String?
+  createdAt   DateTime             @default(now())
+
+  @@map("inventory_activities")
+}
+
+model Order {
+  id         String      @id @default(cuid())
+  userId     String
+  user       User        @relation(fields: [userId], references: [id])
+  status     OrderStatus @default(PENDING)
+  total      Float
+  orderItems OrderItem[]
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id        String  @id @default(cuid())
+  orderId   String
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+  quantity  Int
+  price     Float
+
+  @@map("order_items")
+}
+
+model CartItem {
+  id        String  @id @default(cuid())
+  userId    String
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+  quantity  Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, productId])
+  @@map("cart_items")
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  rating    Int      @db.SmallInt
+  comment   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, productId])
+  @@map("reviews")
+}
+
+model Token {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  type      String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@map("tokens")
+}
+
+enum Status {
+  ACTIVE
+  INACTIVE
+}
+
+enum OrderStatus {
+  PENDING
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+enum InventoryActivityType {
+  INBOUND
+  OUTBOUND
+  ADJUSTMENT
+  TRANSFER
+}
+
+enum ProductType {
+  SMARTPHONE
+  LAPTOP
+  TABLET
+  ACCESSORIES
+  AUDIO
+  WEARABLE
+  GAMING
+  SOFTWARE
+  SERVICES
+}
+
+enum ProductCondition {
+  NEW
+  LIKE_NEW
+  GOOD
+  FAIR
+  REFURBISHED
+}
+
+enum ProductStatus {
+  ACTIVE
+  INACTIVE
+  OUT_OF_STOCK
+  DISCONTINUED
+  COMING_SOON
+}
