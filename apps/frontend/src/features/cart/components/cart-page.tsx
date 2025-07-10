@@ -13,27 +13,39 @@ import {
     ArrowLeft,
     CreditCard,
 } from 'lucide-react'
-import { useCart, useUpdateCartItem, useRemoveFromCart } from '@/hooks/use-api'
-import { Layout } from '@/shared'
+import { useCart, useUpdateCartItem, useRemoveFromCart } from '@/hooks/use-cart'
+import { Layout, useToast, logger } from '@/shared'
 import Link from 'next/link'
 import Image from 'next/image'
 import { CartItem } from '@/shared/types'
+import DebugCart from '@/components/debug-cart'
 
 export default function CartPage() {
     const { data: cart, isLoading } = useCart()
+            logger.cart.fetchSuccess(cart?.items?.length || 0)
     const updateCartMutation = useUpdateCartItem()
     const removeCartMutation = useRemoveFromCart()
+    const { success, error } = useToast()
 
     const updateQuantity = (itemId: string, quantity: number) => {
         if (quantity < 1) {
-            removeCartMutation.mutate(itemId)
+            removeCartMutation.mutate(itemId, {
+                onSuccess: () => success.removeFromCart(),
+                onError: () => error.cartUpdate()
+            })
         } else {
-            updateCartMutation.mutate({ itemId, quantity })
+            updateCartMutation.mutate({ itemId, quantity }, {
+                onSuccess: () => success.updateCart(),
+                onError: () => error.cartUpdate()
+            })
         }
     }
 
     const removeItem = (itemId: string) => {
-        removeCartMutation.mutate(itemId)
+        removeCartMutation.mutate(itemId, {
+            onSuccess: () => success.removeFromCart(),
+            onError: () => error.cartUpdate()
+        })
     }
 
     // Calculate totals
@@ -111,6 +123,9 @@ export default function CartPage() {
     return (
         <Layout>
             <div className="container mx-auto px-4 py-8">
+                {/* Debug Cart Component */}
+                <DebugCart />
+
                 <div className="mb-8">
                     <h1 className="text-3xl font-bold mb-2">
                         Giỏ hàng của bạn

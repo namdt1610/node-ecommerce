@@ -27,16 +27,15 @@ class CartController {
                 return;
             }
             const cart = await this.getCartUseCase.execute(userId);
-            res.json({
-                success: true,
-                data: cart || {
-                    userId,
-                    items: [],
-                    totalItems: 0,
-                    totalAmount: 0,
-                    currency: 'USD',
-                    updatedAt: new Date(),
-                },
+            console.log('Cart controller - userId:', userId);
+            console.log('Cart controller - cart from use case:', cart);
+            res.json(cart || {
+                userId,
+                items: [],
+                totalItems: 0,
+                totalAmount: 0,
+                currency: 'VND',
+                updatedAt: new Date(),
             });
         }
         catch (error) {

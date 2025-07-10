@@ -61,11 +61,9 @@ export interface BillingAddress {
 }
 
 export interface PaymentMethod {
-    type: PaymentType
-    cardLast4?: string
-    cardBrand?: string
-    expiryMonth?: number
-    expiryYear?: number
+    type: string
+    provider?: string
+    details?: any
 }
 
 export enum OrderStatus {
@@ -111,16 +109,16 @@ export enum PaymentType {
 export interface CreateOrderData {
     userId: string
     items: CreateOrderItemData[]
-    shippingAddress: ShippingAddress
-    billingAddress: BillingAddress
-    paymentMethod: PaymentMethod
+    shippingAddress?: string
+    paymentMethod?: string
+    billingAddress?: BillingAddress
     notes?: string
 }
 
 export interface CreateOrderItemData {
     productId: string
     quantity: number
-    unitPrice: number
+    price: number
 }
 
 export interface UpdateOrderData {

@@ -1,112 +1,40 @@
-// Common utility functions
-// Common utility functions
-export const formatPrice = (price: number): string => {
-    return `₫${price.toLocaleString('vi-VN')}`
-}
+// =================================
+// SHARED UTILITIES INDEX
+// =================================
+// Central exports for all utility functions
 
-export const formatDate = (date: string | Date): string => {
-    const dateObj = typeof date === 'string' ? new Date(date) : date
-    return dateObj.toLocaleDateString('vi-VN', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-    })
-}
+// Formatters (centralized)
+export * from './formatters'
 
-export const formatDateTime = (date: string | Date): string => {
-    const dateObj = typeof date === 'string' ? new Date(date) : date
-    return dateObj.toLocaleString('vi-VN', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-    })
-}
+// Constants and mappings
+export * from './constants'
 
-export const slugify = (text: string): string => {
-    return text
-        .toLowerCase()
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '') // Remove diacritics
-        .replace(/[^a-z0-9 -]/g, '') // Remove invalid chars
-        .replace(/\s+/g, '-') // Replace spaces with -
-        .replace(/-+/g, '-') // Replace multiple - with single -
-        .replace(/^-+|-+$/g, '') // Trim - from start and end
-}
+// API helpers
+export * from './api-helpers'
 
-export const truncateText = (text: string, maxLength: number): string => {
-    if (text.length <= maxLength) return text
-    return text.slice(0, maxLength) + '...'
-}
+// Image utilities
+export * from './image-utils'
 
-export const calculateDiscount = (
-    originalPrice: number,
-    salePrice: number
-): number => {
-    return Math.round(((originalPrice - salePrice) / originalPrice) * 100)
-}
+// Logging utilities
+export * from './logger'
 
-export const generateStarRating = (
-    rating: number,
-    maxRating: number = 5
-): boolean[] => {
-    return Array.from({ length: maxRating }, (_, index) => index < rating)
-}
+// DOM and performance utilities
+export * from './dom'
 
-export const debounce = <T extends (...args: unknown[]) => void>(
-    func: T,
-    delay: number
-): ((...args: Parameters<T>) => void) => {
-    let timeoutId: NodeJS.Timeout
-    return (...args: Parameters<T>) => {
-        clearTimeout(timeoutId)
-        timeoutId = setTimeout(() => func(...args), delay)
-    }
-}
+// Validation utilities
+export * from './validation'
 
-export const cn = (
-    ...classes: (string | undefined | null | false)[]
-): string => {
-    return classes.filter(Boolean).join(' ')
-}
+// Storage utilities
+export * from './storage'
 
-// Validation helpers
-export const isValidEmail = (email: string): boolean => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    return emailRegex.test(email)
-}
+// Array manipulation utilities
+export * from './arrays'
 
-export const isValidPhone = (phone: string): boolean => {
-    const phoneRegex = /^[0-9]{10,11}$/
-    return phoneRegex.test(phone.replace(/\s/g, ''))
-}
+// Object manipulation utilities
+export * from './objects'
 
-// Local storage helpers
-export const storage = {
-    get: <T>(key: string): T | null => {
-        if (typeof window === 'undefined') return null
-        try {
-            const item = localStorage.getItem(key)
-            return item ? JSON.parse(item) : null
-        } catch {
-            return null
-        }
-    },
-    set: <T>(key: string, value: T): void => {
-        if (typeof window === 'undefined') return
-        try {
-            localStorage.setItem(key, JSON.stringify(value))
-        } catch {
-            // Handle storage errors silently
-        }
-    },
-    remove: (key: string): void => {
-        if (typeof window === 'undefined') return
-        localStorage.removeItem(key)
-    },
-    clear: (): void => {
-        if (typeof window === 'undefined') return
-        localStorage.clear()
-    },
-}
+// Error handling utilities
+export * from './error-handlers'
+
+// Data transformers
+export * from './transformers'

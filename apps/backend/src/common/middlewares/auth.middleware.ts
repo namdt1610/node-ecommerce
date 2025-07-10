@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express'
 import * as jwt from 'jsonwebtoken'
-import { UserRepository } from '../../modules/user/user.repository'
+import { PrismaUserRepo } from '../../modules/user/infrastructure/repositories/user.repository'
 import { createError } from './error-handler.middleware'
 
 interface AuthenticatedRequest extends Request {
@@ -21,12 +21,10 @@ export const authMiddleware = async (
             throw createError('Authentication required', 401)
         }
 
-        const decoded = jwt.verify(
-            token,
-            process.env.JWT_SECRET || 'your-default-secret'
-        ) as { userId: string }
+        const secret = process.env.JWT_SECRET || 'your-default-secret'
+        const decoded = jwt.verify(token, secret) as { userId: string }
 
-        const userRepository = new UserRepository()
+        const userRepository = new PrismaUserRepo()
         const user = await userRepository.findById(decoded.userId)
 
         if (!user) {
@@ -51,12 +49,13 @@ export const optionalAuthMiddleware = async (
             req.headers.authorization?.replace('Bearer ', '')
 
         if (token) {
-            const decoded = jwt.verify(
-                token,
-                process.env.JWT_SECRET || 'your-default-secret'
-            ) as { userId: string }
+            const secret =
+                process.env.JWT_ACCESS_SECRET ||
+                process.env.JWT_SECRET ||
+                'your-default-secret'
+            const decoded = jwt.verify(token, secret) as { userId: string }
 
-            const userRepository = new UserRepository()
+            const userRepository = new PrismaUserRepo()
             const user = await userRepository.findById(decoded.userId)
 
             if (user) {

@@ -35,7 +35,7 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.optionalAuthMiddleware = exports.authMiddleware = void 0;
 const jwt = __importStar(require("jsonwebtoken"));
-const user_repository_1 = require("../../modules/user/user.repository");
+const user_repository_1 = require("../../modules/user/infrastructure/repositories/user.repository");
 const error_handler_middleware_1 = require("./error-handler.middleware");
 const authMiddleware = async (req, res, next) => {
     try {
@@ -44,8 +44,9 @@ const authMiddleware = async (req, res, next) => {
         if (!token) {
             throw (0, error_handler_middleware_1.createError)('Authentication required', 401);
         }
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-default-secret');
-        const userRepository = new user_repository_1.UserRepository();
+        const secret = process.env.JWT_SECRET || 'your-default-secret';
+        const decoded = jwt.verify(token, secret);
+        const userRepository = new user_repository_1.PrismaUserRepo();
         const user = await userRepository.findById(decoded.userId);
         if (!user) {
             throw (0, error_handler_middleware_1.createError)('User not found', 401);
@@ -63,8 +64,11 @@ const optionalAuthMiddleware = async (req, res, next) => {
         const token = req.cookies?.token ||
             req.headers.authorization?.replace('Bearer ', '');
         if (token) {
-            const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-default-secret');
-            const userRepository = new user_repository_1.UserRepository();
+            const secret = process.env.JWT_ACCESS_SECRET ||
+                process.env.JWT_SECRET ||
+                'your-default-secret';
+            const decoded = jwt.verify(token, secret);
+            const userRepository = new user_repository_1.PrismaUserRepo();
             const user = await userRepository.findById(decoded.userId);
             if (user) {
                 req.user = user;

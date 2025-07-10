@@ -1,25 +1,17 @@
 import { Layout } from '@/shared'
+import { Product } from '@/shared/types'
 import { ProductTabs } from '@/features/products'
 import ProductDetailClient from '@/features/products/components/product-detail-client'
 import { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 
-// Server-side data fetching
-async function getProduct(id: string) {
-    const apiUrl =
-        process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3030/api'
+import { serverApi } from '@/lib/api/server'
 
+// Server-side data fetching using reusable API service
+async function getProduct(id: string): Promise<Product | null> {
     try {
-        const response = await fetch(`${apiUrl}/products/${id}`, {
-            next: { revalidate: 300 }, // Revalidate every 5 minutes
-        })
-
-        if (!response.ok) {
-            return null
-        }
-
-        const data = await response.json()
-        return data.success ? data.data : null
+        const response = await serverApi.products.getProduct(id)
+        return response.success ? response.data as Product : null
     } catch (error) {
         console.error('Failed to fetch product:', error)
         return null

@@ -5,10 +5,15 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { ShoppingCart, Star, Heart } from 'lucide-react'
 import Link from 'next/link'
-import Image from 'next/image'
 
 import { Product } from '@/shared/types'
-import { useAddToCart } from '@/hooks/use-api'
+import { useAddToCart } from '@/hooks/use-cart'
+import {
+    useToast,
+    ProductImageFill,
+    getProductImageUrl,
+    logger,
+} from '@/shared'
 
 interface ProductsSectionProps {
     products: Product[]
@@ -17,30 +22,39 @@ interface ProductsSectionProps {
 
 export function ProductsSection({ products, isLoading }: ProductsSectionProps) {
     const addToCartMutation = useAddToCart()
+    const { success, error } = useToast()
 
     const handleAddToCart = (productId: string, productName: string) => {
         addToCartMutation.mutate(
             { productId, quantity: 1 },
             {
                 onSuccess: () => {
-                    // Simple feedback - could be enhanced with a proper toast library later
-                    console.log(`Added "${productName}" to cart`)
+                    success.addToCart(productName)
                 },
-                onError: (error) => {
-                    console.error('Failed to add product to cart:', error)
+                onError: (err) => {
+                    logger.cart.addItemError(err, productId)
+                    error.addToCart()
                 },
             }
         )
     }
 
     const renderProductCard = (product: Product) => {
-        const hasDiscount = product.originalPrice && product.originalPrice > product.price
-        const discountPercent = hasDiscount 
-            ? Math.round(((product.originalPrice! - product.price) / product.originalPrice!) * 100)
+        const hasDiscount =
+            product.originalPrice && product.originalPrice > product.price
+        const discountPercent = hasDiscount
+            ? Math.round(
+                  ((product.originalPrice! - product.price) /
+                      product.originalPrice!) *
+                      100
+              )
             : 0
 
         return (
-            <Card key={product.id} className="hover:shadow-lg transition-shadow">
+            <Card
+                key={product.id}
+                className="hover:shadow-lg transition-shadow"
+            >
                 <CardContent className="p-0">
                     <div className="aspect-square bg-gray-200 relative overflow-hidden">
                         {hasDiscount && (
@@ -55,19 +69,12 @@ export function ProductsSection({ products, isLoading }: ProductsSectionProps) {
                         >
                             <Heart className="h-4 w-4" />
                         </Button>
-                        {product.imageUrl || product.images?.[0] ? (
-                            <Image
-                                src={product.imageUrl || product.images![0]}
-                                alt={product.name}
-                                fill
-                                className="object-cover hover:scale-105 transition-transform duration-300"
-                                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
-                            />
-                        ) : (
-                            <div className="absolute inset-0 flex items-center justify-center text-gray-500 bg-gray-100">
-                                <span className="text-sm">Chưa có hình ảnh</span>
-                            </div>
-                        )}
+                        <ProductImageFill
+                            src={getProductImageUrl(product)}
+                            alt={product.name}
+                            className="object-cover hover:scale-105 transition-transform duration-300"
+                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+                        />
                     </div>
                     <div className="p-4">
                         <Link href={`/products/${product.id}`}>
@@ -97,17 +104,22 @@ export function ProductsSection({ products, isLoading }: ProductsSectionProps) {
                                 </span>
                                 {hasDiscount && (
                                     <span className="text-sm text-muted-foreground line-through ml-2 block">
-                                        ₫{product.originalPrice?.toLocaleString()}
+                                        ₫
+                                        {product.originalPrice?.toLocaleString()}
                                     </span>
                                 )}
                             </div>
-                            <Button 
-                                size="sm" 
-                                onClick={() => handleAddToCart(product.id, product.name)}
+                            <Button
+                                size="sm"
+                                onClick={() =>
+                                    handleAddToCart(product.id, product.name)
+                                }
                                 disabled={addToCartMutation.isPending}
                             >
                                 <ShoppingCart className="h-4 w-4 mr-1" />
-                                {addToCartMutation.isPending ? 'Đang thêm...' : 'Mua'}
+                                {addToCartMutation.isPending
+                                    ? 'Đang thêm...'
+                                    : 'Mua'}
                             </Button>
                         </div>
                     </div>

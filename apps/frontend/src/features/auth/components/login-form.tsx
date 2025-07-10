@@ -6,10 +6,11 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Eye, EyeOff, Mail, Lock } from 'lucide-react'
-import { useLogin } from '@/hooks/use-api'
+import { useLogin } from '@/hooks/use-auth'
 import { useAuth } from '../providers/auth-provider'
 import { ROUTES } from '@/shared/constants'
 import { isValidEmail } from '@/shared/utils'
+import { useToast, logger } from '@/shared'
 
 interface LoginFormData {
     email: string
@@ -27,6 +28,7 @@ export function LoginForm() {
     const router = useRouter()
     const loginMutation = useLogin()
     const { login } = useAuth()
+    const { success, error } = useToast()
 
     const validateForm = (): boolean => {
         const newErrors: Partial<LoginFormData> = {}
@@ -51,17 +53,23 @@ export function LoginForm() {
         e.preventDefault()
 
         if (!validateForm()) {
+            logger.form.validation('login', errors)
             return
         }
+
+        logger.form.submit('login', { email: formData.email })
 
         try {
             const response = await loginMutation.mutateAsync(formData)
             if (response.data.accessToken) {
                 login(response.data.accessToken)
+                logger.auth.loginSuccess(response.data.user?.id || 'unknown')
+                success.login()
                 router.push(ROUTES.HOME)
             }
-        } catch (error) {
-            console.error('Login failed:', error)
+        } catch (err) {
+            logger.auth.loginError(err)
+            error.login()
             setErrors({ email: 'Email hoặc mật khẩu không đúng' })
         }
     }

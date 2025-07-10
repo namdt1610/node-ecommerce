@@ -1,99 +1,118 @@
 'use client'
 
+import { useState } from 'react'
+import Image from 'next/image'
+import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { ShoppingCart, Star, Heart } from 'lucide-react'
-import Link from 'next/link'
-import Image from 'next/image'
+import { ShoppingCart, Heart, Star } from 'lucide-react'
 import { Product } from '@/shared/types'
+import { formatPrice, calculateDiscount } from '@/shared/utils'
 
 interface ProductCardProps {
     product: Product
+    onAddToCart?: (productId: string) => void
+    onToggleWishlist?: (productId: string) => void
 }
 
 export default function ProductCard({ product }: ProductCardProps) {
+    const [imageError, setImageError] = useState(false)
+    const [isWishlisted, setIsWishlisted] = useState(false)
+
+    const discount = product.originalPrice
+        ? calculateDiscount(product.originalPrice, product.price)
+        : 0
+
     return (
-        <Card className="hover:shadow-lg transition-shadow">
+        <Card className="group overflow-hidden border transition-all hover:shadow-lg">
             <CardContent className="p-0">
-                <div className="aspect-square bg-gray-200 relative overflow-hidden">
-                    {product.imageUrl ? (
+                {/* Product Image */}
+                <div className="relative aspect-square overflow-hidden">
+                    <Link href={`/products/${product.id}`}>
                         <Image
-                            src={product.imageUrl}
+                            src={
+                                imageError
+                                    ? '/placeholder-product.jpg'
+                                    : product.imageUrl ||
+                                      '/placeholder-product.jpg'
+                            }
                             alt={product.name}
                             fill
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                                const target = e.target as HTMLImageElement
-                                target.style.display = 'none'
-                                const fallback =
-                                    target.nextElementSibling as HTMLElement
-                                if (fallback) fallback.style.display = 'flex'
-                            }}
+                            className="object-cover transition-transform group-hover:scale-105"
+                            onError={() => setImageError(true)}
                         />
-                    ) : null}
-                    <div
-                        className="absolute inset-0 flex items-center justify-center text-gray-500 bg-gray-200"
-                        style={{ display: product.imageUrl ? 'none' : 'flex' }}
-                    >
-                        <div className="text-center">
-                            <div className="w-16 h-16 mx-auto mb-2 bg-gray-300 rounded-full flex items-center justify-center">
-                                <ShoppingCart className="h-8 w-8 text-gray-400" />
-                            </div>
-                            <span className="text-sm">Hình ảnh sản phẩm</span>
-                        </div>
-                    </div>
-                    <Badge className="absolute top-2 left-2 bg-red-500">
-                        -20%
-                    </Badge>
+                    </Link>
+
+                    {/* Discount Badge */}
+                    {discount > 0 && (
+                        <Badge className="absolute top-2 left-2 bg-red-500 hover:bg-red-600">
+                            -{discount}%
+                        </Badge>
+                    )}
+
+                    {/* Wishlist Button */}
                     <Button
                         variant="ghost"
                         size="icon"
-                        className="absolute top-2 right-2 bg-white/80 hover:bg-white"
+                        className="absolute top-2 right-2 h-8 w-8 bg-white/80 hover:bg-white"
+                        onClick={() => setIsWishlisted(!isWishlisted)}
                     >
-                        <Heart className="h-4 w-4" />
+                        <Heart
+                            className={`h-4 w-4 ${
+                                isWishlisted
+                                    ? 'fill-red-500 text-red-500'
+                                    : 'text-gray-600'
+                            }`}
+                        />
                     </Button>
                 </div>
-                <div className="p-4">
+
+                {/* Product Info */}
+                <div className="p-4 space-y-3">
+                    {/* Category */}
+                    <Badge variant="secondary" className="text-xs">
+                        {product.category.name}
+                    </Badge>
+
+                    {/* Product Name */}
                     <Link href={`/products/${product.id}`}>
-                        <h4 className="font-semibold mb-2 hover:text-primary cursor-pointer line-clamp-2">
+                        <h3 className="font-semibold line-clamp-2 hover:text-primary transition-colors">
                             {product.name}
-                        </h4>
+                        </h3>
                     </Link>
-                    {product.category && (
-                        <p className="text-sm text-gray-500 mb-2">
-                            {product.category.name}
-                        </p>
-                    )}
-                    <div className="flex items-center mb-2">
-                        {Array.from({ length: 5 }).map((_, j) => (
-                            <Star
-                                key={j}
-                                className={`h-4 w-4 ${
-                                    j < 4
-                                        ? 'text-yellow-400 fill-current'
-                                        : 'text-gray-300'
-                                }`}
-                            />
-                        ))}
-                        <span className="text-sm text-muted-foreground ml-1">
+
+                    {/* Rating */}
+                    <div className="flex items-center gap-2">
+                        <div className="flex items-center">
+                            {Array.from({ length: 5 }).map((_, i) => (
+                                <Star
+                                    key={i}
+                                    className={`h-3 w-3 ${
+                                        i < 4
+                                            ? 'text-yellow-400 fill-current'
+                                            : 'text-gray-300'
+                                    }`}
+                                />
+                            ))}
+                        </div>
+                        <span className="text-xs text-muted-foreground">
                             (4.0)
                         </span>
                     </div>
+
+                    {/* Price and Add to Cart */}
                     <div className="flex items-center justify-between">
                         <div>
                             <span className="text-lg font-bold text-red-600">
-                                {new Intl.NumberFormat('vi-VN', {
-                                    style: 'currency',
-                                    currency: 'VND',
-                                }).format(product.price)}
+                                {formatPrice(product.price)}
                             </span>
-                            <span className="text-sm text-muted-foreground line-through ml-2">
-                                {new Intl.NumberFormat('vi-VN', {
-                                    style: 'currency',
-                                    currency: 'VND',
-                                }).format(product.price * 1.25)}
-                            </span>
+                            {product.originalPrice &&
+                                product.originalPrice > product.price && (
+                                    <span className="text-sm text-muted-foreground line-through ml-2">
+                                        {formatPrice(product.originalPrice)}
+                                    </span>
+                                )}
                         </div>
                         <Link href={`/products/${product.id}`}>
                             <Button size="sm">

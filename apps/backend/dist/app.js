@@ -43,10 +43,17 @@ const cookie_parser_1 = __importDefault(require("cookie-parser"));
 const path_1 = __importDefault(require("path"));
 const fs = __importStar(require("fs"));
 const dotenv = __importStar(require("dotenv"));
-// Load environment variables
+// Load environment variables from the backend directory
+const envPath = path_1.default.resolve(__dirname, '../.env');
+dotenv.config({ path: envPath });
+// Also try to load from current directory as fallback
 dotenv.config();
-// Import route registration function
-const routes_1 = require("./routes");
+console.log('Environment loaded:');
+console.log('- PORT:', process.env.PORT);
+console.log('- JWT_SECRET:', process.env.JWT_SECRET ? 'SET' : 'NOT SET');
+console.log('- DATABASE_URL:', process.env.DATABASE_URL ? 'SET' : 'NOT SET');
+console.log('- NODE_ENV:', process.env.NODE_ENV);
+// Import route registration function will be done in index.ts
 // Import working middlewares
 const error_handler_middleware_1 = require("./common/middlewares/error-handler.middleware");
 const app = (0, express_1.default)();
@@ -57,7 +64,7 @@ app.use((0, cookie_parser_1.default)());
 app.use((0, morgan_1.default)('combined'));
 // CORS configuration
 const corsOptions = {
-    origin: ['http://localhost:3000', 'http://localhost:3001'],
+    origin: '*',
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: [
         'Content-Type',
@@ -81,8 +88,7 @@ app.use((req, res, next) => {
     console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
     next();
 });
-// Register all API routes
-(0, routes_1.registerAllRoutes)(app);
+// Routes will be registered in index.ts with Socket.IO instance
 // Health check endpoint
 app.get('/health', (req, res) => {
     res.json({
@@ -95,7 +101,7 @@ app.get('/health', (req, res) => {
 // API endpoints summary
 app.get('/api', (req, res) => {
     res.json({
-        message: 'Bookscape API',
+        message: 'NodeApple API',
         version: '1.0.0',
         environment: process.env.NODE_ENV || 'development',
         endpoints: {

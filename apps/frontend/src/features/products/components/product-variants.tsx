@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { formatPrice } from '@/lib/utils'
+import { formatPrice } from '@/shared/utils'
 
 interface VariantAttribute {
     name: string

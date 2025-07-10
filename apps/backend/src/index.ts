@@ -22,6 +22,9 @@ const startServer = async () => {
         const socketService = initializeSocketService(httpServer)
         console.log('Socket.IO service initialized')
 
+        // Get Socket.IO instance for other services
+        const io = socketService.getIO()
+
         // Create dashboard controller with HTTP server
         const dashboardController = createDashboardController(httpServer)
 
@@ -30,6 +33,10 @@ const startServer = async () => {
             req.dashboardController = dashboardController
             next()
         })
+
+        // Initialize routes with Socket.IO instance
+        const { registerAllRoutes } = await import('./routes')
+        registerAllRoutes(app, io)
 
         console.log('Dashboard service initialized')
 

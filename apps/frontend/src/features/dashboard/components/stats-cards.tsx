@@ -3,14 +3,14 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
+    AlertCircle,
     DollarSign,
+    Package,
     ShoppingCart,
     Users,
-    Package,
-    TrendingUp,
-    AlertCircle,
 } from 'lucide-react'
 import { DashboardStats } from '@/shared/types'
+import { formatPrice, formatNumber } from '@/shared/utils'
 
 interface StatsCardsProps {
     stats: DashboardStats | undefined
@@ -51,26 +51,15 @@ export function StatsCards({ stats, isLoading }: StatsCardsProps) {
         )
     }
 
-    const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat('vi-VN', {
-            style: 'currency',
-            currency: 'VND',
-        }).format(amount)
-    }
-
-    const formatNumber = (num: number) => {
-        return new Intl.NumberFormat('vi-VN').format(num)
-    }
-
-    const statsConfig = [
+    const statsCards = [
         {
             title: 'Tổng Doanh Thu',
-            value: formatCurrency(stats.totalRevenue),
+            value: formatPrice(stats.totalRevenue),
             icon: DollarSign,
         },
         {
-            title: 'Đơn Hàng Hôm Nay',
-            value: formatNumber(stats.todayOrders),
+            title: 'Tổng Đơn Hàng',
+            value: formatNumber(stats.totalOrders),
             icon: ShoppingCart,
         },
         {
@@ -85,46 +74,41 @@ export function StatsCards({ stats, isLoading }: StatsCardsProps) {
         },
         {
             title: 'Doanh Thu Hôm Nay',
-            value: formatCurrency(stats.todayRevenue),
-            icon: TrendingUp,
+            value: formatPrice(stats.todayRevenue),
+            icon: DollarSign,
+        },
+        {
+            title: 'Đơn Hôm Nay',
+            value: formatNumber(stats.todayOrders),
+            icon: ShoppingCart,
         },
         {
             title: 'Đơn Chờ Xử Lý',
             value: formatNumber(stats.pendingOrders),
+            icon: Package,
+        },
+        {
+            title: 'Đơn Hoàn Thành',
+            value: formatNumber(stats.completedOrders),
             icon: ShoppingCart,
-        },
-        {
-            title: 'Users Mới Hôm Nay',
-            value: formatNumber(stats.newUsersToday),
-            icon: Users,
-        },
-        {
-            title: 'Sản Phẩm Sắp Hết',
-            value: formatNumber(stats.lowStockProducts),
-            icon: AlertCircle,
         },
     ]
 
     return (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            {statsConfig.map((stat, index) => {
-                const Icon = stat.icon
-                return (
-                    <Card key={index}>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">
-                                {stat.title}
-                            </CardTitle>
-                            <Icon className="h-4 w-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">
-                                {stat.value}
-                            </div>
-                        </CardContent>
-                    </Card>
-                )
-            })}
+            {statsCards.map((card, index) => (
+                <Card key={index}>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">
+                            {card.title}
+                        </CardTitle>
+                        <card.icon className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">{card.value}</div>
+                    </CardContent>
+                </Card>
+            ))}
         </div>
     )
 }

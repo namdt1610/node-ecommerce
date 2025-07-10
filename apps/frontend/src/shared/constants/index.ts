@@ -42,6 +42,8 @@ export const ROUTES = {
     CHECKOUT: '/checkout',
     ORDERS: '/orders',
     ORDER_DETAIL: (id: string) => `/orders/${id}`,
+    ORDER_TRACKING: (id: string) => `/orders/${id}/tracking`,
+    ORDER_TRACKING_DEMO: '/demo/order-tracking',
     PROFILE: '/profile',
 } as const
 

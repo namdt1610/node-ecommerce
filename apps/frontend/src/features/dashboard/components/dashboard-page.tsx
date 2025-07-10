@@ -9,7 +9,7 @@ import {
     useSalesAnalytics,
     useRecentActivity,
     useRefreshDashboard,
-} from '@/hooks/use-api'
+} from '@/hooks'
 import { useSocket } from '../hooks/use-socket'
 import { StatsCards } from './stats-cards'
 import { RecentOrders } from './recent-orders'

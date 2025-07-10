@@ -1,28 +1,24 @@
 import { Layout } from '@/shared'
+import { Product, Category } from '@/shared/types'
 import { ProductsClientPage } from '@/features/products'
 import { Metadata } from 'next'
+import { Suspense } from 'react'
 
-// Server-side data fetching
+import { serverApi } from '@/lib/api/server'
+
+// Server-side data fetching using reusable API services
 async function getProductsAndCategories() {
-    const apiUrl =
-        process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3030/api'
-
     try {
-        const [productsRes, categoriesRes] = await Promise.all([
-            fetch(`${apiUrl}/products`, {
-                next: { revalidate: 300 }, // Revalidate every 5 minutes
-            }),
-            fetch(`${apiUrl}/categories`, {
-                next: { revalidate: 600 }, // Revalidate every 10 minutes
-            }),
+        const [productsResponse, categoriesResponse] = await Promise.all([
+            serverApi.products.getProducts(),
+            serverApi.categories.getCategories(),
         ])
 
-        const productsData = await productsRes.json()
-        const categoriesData = await categoriesRes.json()
-
         return {
-            products: productsData.success ? productsData.data : [],
-            categories: categoriesData.success ? categoriesData.data : [],
+            products: productsResponse.success ? productsResponse.data as Product[] : [],
+            categories: categoriesResponse.success
+                ? categoriesResponse.data as Category[]
+                : [],
         }
     } catch (error) {
         console.error('Failed to fetch data:', error)
@@ -49,10 +45,18 @@ export default async function ProductsPage() {
 
     return (
         <Layout>
-            <ProductsClientPage
-                initialProducts={products}
-                initialCategories={categories}
-            />
+            <Suspense
+                fallback={
+                    <div className="flex justify-center items-center min-h-[400px]">
+                        Loading products...
+                    </div>
+                }
+            >
+                <ProductsClientPage
+                    initialProducts={products}
+                    initialCategories={categories}
+                />
+            </Suspense>
         </Layout>
     )
 }

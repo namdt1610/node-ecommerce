@@ -1,40 +1,37 @@
-import { Layout } from '@/shared'
+import { Layout, logger } from '@/shared'
+import { Product, Category } from '@/shared/types'
 import {
     HeroSection,
     CategoriesSection,
     ProductsSection,
-    Footer,
 } from '@/features/home'
+import { serverApi } from '@/lib/api/server'
 
-// Server-side data fetching
+// Server-side data fetching using reusable API services
 async function getProductsAndCategories() {
-    const apiUrl =
-        process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3030/api'
-
     try {
-        const [productsRes, categoriesRes] = await Promise.all([
-            fetch(`${apiUrl}/products?limit=8`, {
-                next: { revalidate: 300 }, // Revalidate every 5 minutes
-            }),
-            fetch(`${apiUrl}/categories`, {
-                next: { revalidate: 600 }, // Revalidate every 10 minutes
-            }),
+        const [productsResponse, categoriesResponse] = await Promise.all([
+            serverApi.products.getProducts({ limit: 8 }),
+            serverApi.categories.getCategories(),
         ])
 
-        const productsData = await productsRes.json()
-        const categoriesData = await categoriesRes.json()
+        const products = productsResponse.success
+            ? (productsResponse.data as Product[])
+            : []
+        const categories = categoriesResponse.success
+            ? (categoriesResponse.data as Category[])
+            : []
 
-        const products = productsData.success ? productsData.data : []
-        const categories = categoriesData.success ? categoriesData.data : []
-        
-        console.log(`Fetched ${products.length} products and ${categories.length} categories for home page`)
-        
+        logger.product.fetchSuccess(products.length, {
+            categories: categories.length,
+        })
+
         return {
             products,
             categories,
         }
     } catch (error) {
-        console.error('Failed to fetch data:', error)
+        logger.product.fetchError(error)
         return {
             products: [],
             categories: [],
@@ -48,15 +45,8 @@ export default async function Home() {
     return (
         <Layout>
             <HeroSection />
-            <CategoriesSection 
-                categories={categories} 
-                isLoading={false} 
-            />
-            <ProductsSection 
-                products={products} 
-                isLoading={false} 
-            />
-            <Footer />
+            <CategoriesSection categories={categories} isLoading={false} />
+            <ProductsSection products={products} isLoading={false} />
         </Layout>
     )
 }

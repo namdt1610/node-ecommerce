@@ -1,21 +1,9 @@
-import { Order, OrderStatus } from '../entities/order.entity'
-
-export interface CreateOrderData {
-    userId: string
-    items: {
-        productId: string
-        quantity: number
-        price: number
-    }[]
-    shippingAddress?: string
-    paymentMethod?: string
-}
-
-export interface UpdateOrderData {
-    status?: OrderStatus
-    shippingAddress?: string
-    paymentMethod?: string
-}
+import {
+    Order,
+    OrderStatus,
+    CreateOrderData,
+    UpdateOrderData,
+} from '../entities/order.entity'
 
 export interface IOrderRepository {
     create(data: CreateOrderData): Promise<Order>

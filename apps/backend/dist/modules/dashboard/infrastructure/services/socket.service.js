@@ -64,20 +64,17 @@ class SocketService {
                 }
                 const decoded = jsonwebtoken_1.default.verify(token, process.env.JWT_SECRET);
                 // Get user with role from database
-                const { UserRepository } = await Promise.resolve().then(() => __importStar(require('../../../user/user.repository')));
-                const userRepository = new UserRepository();
-                const user = await userRepository.findById(decoded.userId);
+                const { PrismaUserRepo } = await Promise.resolve().then(() => __importStar(require('../../../user/infrastructure/repositories/user.repository')));
+                const userRepository = new PrismaUserRepo();
+                const user = (await userRepository.findById(decoded.userId));
                 if (!user || !user.role) {
                     return next(new Error('Authentication error: User not found or role not found'));
                 }
-                // Check if user has admin role
+                // Set user data
                 const userRole = user.role.name?.toLowerCase();
-                if (userRole !== 'admin') {
-                    return next(new Error(`Authorization error: Admin access required. Current role: ${userRole}`));
-                }
                 socket.data.userId = user.id;
                 socket.data.userRole = userRole;
-                socket.data.isAdmin = true;
+                socket.data.isAdmin = userRole === 'admin';
                 next();
             }
             catch (error) {
@@ -87,35 +84,53 @@ class SocketService {
     }
     setupEventHandlers() {
         this.io.on('connection', (socket) => {
-            console.log(`Admin connected: ${socket.data.userId}`);
-            this.connectedAdmins.add(socket.data.userId);
-            // Join admin room for dashboard updates
-            socket.join('admin-dashboard');
-            // Send initial dashboard data
-            socket.emit('dashboard:connected', {
-                message: 'Connected to admin dashboard',
-                timestamp: new Date(),
-            });
-            // Handle admin requesting specific data
-            socket.on('dashboard:request-stats', () => {
-                this.emitToSocket(socket, 'dashboard:stats-requested', {});
-            });
-            socket.on('dashboard:request-sales', (data) => {
-                this.emitToSocket(socket, 'dashboard:sales-requested', data);
-            });
-            socket.on('dashboard:request-users', () => {
-                this.emitToSocket(socket, 'dashboard:users-requested', {});
-            });
-            socket.on('dashboard:request-products', () => {
-                this.emitToSocket(socket, 'dashboard:products-requested', {});
-            });
-            socket.on('dashboard:request-activity', () => {
-                this.emitToSocket(socket, 'dashboard:activity-requested', {});
-            });
+            console.log(`User connected: ${socket.data.userId}`);
+            // Check if user is admin
+            if (socket.data.isAdmin) {
+                this.connectedAdmins.add(socket.data.userId);
+                // Join admin room for dashboard updates
+                socket.join('admin-dashboard');
+                // Send initial dashboard data
+                socket.emit('dashboard:connected', {
+                    message: 'Connected to admin dashboard',
+                    timestamp: new Date(),
+                });
+                // Handle admin requesting specific data
+                socket.on('dashboard:request-stats', () => {
+                    this.emitToSocket(socket, 'dashboard:stats-requested', {});
+                });
+                socket.on('dashboard:request-sales', (data) => {
+                    this.emitToSocket(socket, 'dashboard:sales-requested', data);
+                });
+                socket.on('dashboard:request-users', () => {
+                    this.emitToSocket(socket, 'dashboard:users-requested', {});
+                });
+                socket.on('dashboard:request-products', () => {
+                    this.emitToSocket(socket, 'dashboard:products-requested', {});
+                });
+                socket.on('dashboard:request-activity', () => {
+                    this.emitToSocket(socket, 'dashboard:activity-requested', {});
+                });
+            }
+            else {
+                // Regular user connections for order tracking
+                socket.join(`user-${socket.data.userId}`);
+                // Handle joining order tracking rooms
+                socket.on('join', (room) => {
+                    socket.join(room);
+                    console.log(`User ${socket.data.userId} joined room: ${room}`);
+                });
+                socket.on('leave', (room) => {
+                    socket.leave(room);
+                    console.log(`User ${socket.data.userId} left room: ${room}`);
+                });
+            }
             // Handle disconnect
             socket.on('disconnect', () => {
-                console.log(`Admin disconnected: ${socket.data.userId}`);
-                this.connectedAdmins.delete(socket.data.userId);
+                console.log(`User disconnected: ${socket.data.userId}`);
+                if (socket.data.isAdmin) {
+                    this.connectedAdmins.delete(socket.data.userId);
+                }
             });
         });
     }

@@ -1,5 +1,10 @@
 import api from '@/lib/api'
-import { LoginRequest, RegisterRequest, AuthResponse, User } from '@/shared/types'
+import {
+    LoginRequest,
+    RegisterRequest,
+    AuthResponse,
+    User,
+} from '@/shared/types'
 import { API_ENDPOINTS } from '@/shared/constants'
 
 export const authService = {

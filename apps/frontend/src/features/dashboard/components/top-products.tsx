@@ -1,11 +1,10 @@
 'use client'
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
+import { TrendingUp } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import { SalesAnalytics } from '@/shared/types'
-import { TrendingUp, Package2 } from 'lucide-react'
+import { formatPrice } from '@/shared/utils'
 
 interface TopProductsProps {
     salesData: SalesAnalytics | undefined
@@ -43,13 +42,6 @@ export function TopProducts({ salesData, isLoading }: TopProductsProps) {
         )
     }
 
-    const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat('vi-VN', {
-            style: 'currency',
-            currency: 'VND',
-        }).format(amount)
-    }
-
     const topProducts = salesData?.topProducts || []
 
     return (
@@ -61,44 +53,31 @@ export function TopProducts({ salesData, isLoading }: TopProductsProps) {
                 </CardTitle>
             </CardHeader>
             <CardContent>
-                {topProducts.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-6 text-center">
-                        <Package2 className="h-10 w-10 text-muted-foreground mb-2" />
-                        <p className="text-sm text-muted-foreground">
-                            Chưa có dữ liệu sản phẩm
-                        </p>
-                    </div>
-                ) : (
-                    <ScrollArea className="h-[400px]">
                         <div className="space-y-4">
-                            {topProducts.slice(0, 5).map((product, index) => (
+                    {topProducts.map((product, index) => (
                                 <div
                                     key={product.id}
-                                    className="flex items-center space-x-4 border-b pb-4 last:border-b-0"
+                            className="flex items-center space-x-4"
                                 >
-                                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-medium">
-                                        #{index + 1}
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted font-medium">
+                                {index + 1}
                                     </div>
-                                    <div className="flex-1 space-y-1">
-                                        <p className="text-sm font-medium leading-none">
+                            <div className="flex-1 min-w-0">
+                                <p className="font-medium truncate">
                                             {product.name}
                                         </p>
-                                        <div className="flex items-center gap-2">
-                                            <Badge variant="secondary">
-                                                {product.sales} bán
-                                            </Badge>
-                                            <span className="text-sm font-medium text-green-600">
-                                                {formatCurrency(
-                                                    product.revenue
-                                                )}
-                                            </span>
+                                <p className="text-sm text-muted-foreground">
+                                    {product.sales} đã bán
+                                </p>
                                         </div>
+                            <div className="text-right">
+                                <p className="font-medium">
+                                    {formatPrice(product.revenue)}
+                                </p>
                                     </div>
                                 </div>
                             ))}
                         </div>
-                    </ScrollArea>
-                )}
             </CardContent>
         </Card>
     )

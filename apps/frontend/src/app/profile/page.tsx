@@ -12,7 +12,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { User, Mail, Settings, Lock, Calendar, Shield } from 'lucide-react'
-import { useProfile, useUpdateProfile } from '@/hooks/use-api'
+import { useProfile, useUpdateProfile } from '@/hooks'
 
 export default function ProfilePage() {
     const { user, isAuthenticated, isLoading: authLoading } = useAuth()

@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useEffect } from 'react'
 import { useAuthProfile } from '../hooks/use-auth-profile'
+import { useToast, logger } from '@/shared'
 
 interface User {
     id: string
@@ -23,6 +24,8 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+    const { success } = useToast()
+
     // Use the auth profile hook that handles token state
     const {
         data: user,
@@ -40,28 +43,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // Debug logging
     useEffect(() => {
-        console.log('🔐 AuthProvider State:', {
-            hasToken: !!token,
-            hasUser: !!user,
-            hasError: !!error,
-            errorMessage: error instanceof Error ? error.message : String(error),
-            isInitialized,
-            isAuthenticated,
-            isLoading,
-            profileLoading,
-        })
-    }, [
-        token,
-        user,
-        error,
-        isInitialized,
-        isAuthenticated,
-        isLoading,
-        profileLoading,
-    ])
+        if (token && user) {
+            logger.auth.profileLoad(user.id)
+        } else if (error) {
+            logger.auth.profileError(error, user?.id)
+        }
+    }, [token, user, error])
 
     const login = (newToken: string) => {
-        console.log('🔐 AuthProvider: Login called with token')
+        logger.auth.login()
         updateToken(newToken)
         // Refetch profile after login
         setTimeout(() => {
@@ -77,10 +67,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 credentials: 'include', // Include cookies
             })
         } catch (error) {
-            console.log('Logout API call failed:', error)
+            logger.auth.loginError(error)
         } finally {
             // Always clear local token regardless of API call result
             updateToken(null)
+            logger.auth.logout(user?.id)
+            success.logout()
             window.location.href = '/'
         }
     }

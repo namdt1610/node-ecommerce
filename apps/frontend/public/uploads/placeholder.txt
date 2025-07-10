@@ -1,0 +1,3 @@
+# Placeholder file for uploads directory
+# This file ensures the uploads directory is tracked in git
+# Product images will be stored in this directory 

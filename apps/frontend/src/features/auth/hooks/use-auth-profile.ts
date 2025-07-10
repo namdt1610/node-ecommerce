@@ -2,7 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { useState, useEffect, useCallback } from 'react'
-import { userApi } from '@/lib/api'
+import { userApi } from '@/lib/api/users'
 
 export const useAuthProfile = () => {
     const [token, setToken] = useState<string | null>(null)

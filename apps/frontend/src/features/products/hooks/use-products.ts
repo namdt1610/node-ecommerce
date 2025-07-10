@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { productApi } from '@/lib/api'
+import { productApi } from '@/lib/api/products'
 
 export const useProducts = (params?: {
     category?: string

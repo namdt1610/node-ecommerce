@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { Product, Category, SortOption } from '@/shared/types'
+import { formatPriceIntl } from '@/shared/utils'
 
 export function useProductsPage(limit = 12) {
     const searchParams = useSearchParams()
@@ -48,13 +49,13 @@ export function useProductsPage(limit = 12) {
             ])
             if (productsData.success && Array.isArray(productsData.data)) {
                 setAllProducts(productsData.data as Product[])
-                
+
                 // Handle both pagination and meta response structures
                 const meta = productsData.meta || productsData.pagination
                 const total = meta?.total || 0
                 const currentLimit = meta?.limit || limit
                 const calculatedTotalPages = Math.ceil(total / currentLimit)
-                
+
                 // Debug pagination data
                 console.log('Products API Response:', {
                     dataLength: productsData.data.length,
@@ -62,9 +63,9 @@ export function useProductsPage(limit = 12) {
                     total: total,
                     currentLimit: currentLimit,
                     calculatedTotalPages: calculatedTotalPages,
-                    currentPage: page
+                    currentPage: page,
                 })
-                
+
                 setTotalPages(calculatedTotalPages || 1)
                 const prices = (productsData.data as Product[]).map(
                     (p: Product) => p.price
@@ -150,12 +151,6 @@ export function useProductsPage(limit = 12) {
         setImageErrors((prev) => new Set(prev).add(productId))
     }
 
-    const formatPrice = (price: number) =>
-        new Intl.NumberFormat('vi-VN', {
-            style: 'currency',
-            currency: 'VND',
-        }).format(price)
-
     const clearFilters = () => {
         setSearchTerm('')
         setSelectedCategory('all')
@@ -185,7 +180,7 @@ export function useProductsPage(limit = 12) {
         setShowFilters,
         filteredAndSortedProducts,
         handleImageError,
-        formatPrice,
+        formatPrice: formatPriceIntl,
         clearFilters,
     }
 }

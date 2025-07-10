@@ -6,11 +6,20 @@ import path from 'path'
 import * as fs from 'fs'
 import * as dotenv from 'dotenv'
 
-// Load environment variables
+// Load environment variables from the backend directory
+const envPath = path.resolve(__dirname, '../.env')
+dotenv.config({ path: envPath })
+
+// Also try to load from current directory as fallback
 dotenv.config()
 
-// Import route registration function
-import { registerAllRoutes } from './routes'
+console.log('Environment loaded:')
+console.log('- PORT:', process.env.PORT)
+console.log('- JWT_SECRET:', process.env.JWT_SECRET ? 'SET' : 'NOT SET')
+console.log('- DATABASE_URL:', process.env.DATABASE_URL ? 'SET' : 'NOT SET')
+console.log('- NODE_ENV:', process.env.NODE_ENV)
+
+// Import route registration function will be done in index.ts
 
 // Import working middlewares
 import { errorHandler } from './common/middlewares/error-handler.middleware'
@@ -25,7 +34,7 @@ app.use(morgan('combined'))
 
 // CORS configuration
 const corsOptions = {
-    origin: ['http://localhost:3000', 'http://localhost:3001'],
+    origin: '*',
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: [
         'Content-Type',
@@ -52,8 +61,7 @@ app.use((req, res, next) => {
     next()
 })
 
-// Register all API routes
-registerAllRoutes(app)
+// Routes will be registered in index.ts with Socket.IO instance
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -68,7 +76,7 @@ app.get('/health', (req, res) => {
 // API endpoints summary
 app.get('/api', (req, res) => {
     res.json({
-        message: 'Bookscape API',
+        message: 'NodeApple API',
         version: '1.0.0',
         environment: process.env.NODE_ENV || 'development',
         endpoints: {

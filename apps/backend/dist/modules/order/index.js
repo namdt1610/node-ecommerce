@@ -13,17 +13,13 @@ var __createBinding = (this && this.__createBinding) || (Object.create ? (functi
 var __exportStar = (this && this.__exportStar) || function(m, exports) {
     for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.orderRoutes = exports.OrderRepository = exports.OrderService = exports.OrderController = void 0;
-var order_controller_1 = require("./order.controller");
+exports.orderRoutes = exports.createOrderContainer = exports.OrderController = void 0;
+var order_controller_1 = require("./presentation/controllers/order.controller");
 Object.defineProperty(exports, "OrderController", { enumerable: true, get: function () { return order_controller_1.OrderController; } });
-var order_service_1 = require("./order.service");
-Object.defineProperty(exports, "OrderService", { enumerable: true, get: function () { return order_service_1.OrderService; } });
-var order_repository_1 = require("./order.repository");
-Object.defineProperty(exports, "OrderRepository", { enumerable: true, get: function () { return order_repository_1.OrderRepository; } });
-__exportStar(require("./order.dto"), exports);
-var order_routes_1 = require("./order.routes");
-Object.defineProperty(exports, "orderRoutes", { enumerable: true, get: function () { return __importDefault(order_routes_1).default; } });
+var container_1 = require("./container");
+Object.defineProperty(exports, "createOrderContainer", { enumerable: true, get: function () { return container_1.createOrderContainer; } });
+var routes_1 = require("./routes");
+Object.defineProperty(exports, "orderRoutes", { enumerable: true, get: function () { return routes_1.orderModuleRoutes; } });
+__exportStar(require("./application/dto"), exports);
+__exportStar(require("./domain/entities/order.entity"), exports);

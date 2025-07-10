@@ -29,6 +29,8 @@ export interface RefundPaymentData {
 export interface IPaymentGateway {
     createPaymentIntent(data: CreatePaymentIntentData): Promise<PaymentIntent>
     confirmPayment(data: ConfirmPaymentData): Promise<PaymentIntent>
-    refundPayment(data: RefundPaymentData): Promise<{ id: string; amount: number; status: string }>
+    refundPayment(
+        data: RefundPaymentData
+    ): Promise<{ id: string; amount: number; status: string }>
     getPaymentIntent(paymentIntentId: string): Promise<PaymentIntent>
 } 

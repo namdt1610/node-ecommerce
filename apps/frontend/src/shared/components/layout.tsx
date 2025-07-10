@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -9,9 +10,15 @@ import {
     User,
     LogOut,
     BarChart3,
+    Package,
+    MapPin,
+    X,
 } from 'lucide-react'
 import Link from 'next/link'
 import { useAuth, useAdmin } from '@/features/auth'
+import { logger } from '@/shared/utils'
+import { FloatingActionButton } from '@/components/ui/floating-action-button'
+import { Footer } from '@/features/home'
 
 interface LayoutProps {
     children: React.ReactNode
@@ -20,6 +27,12 @@ interface LayoutProps {
 export default function Layout({ children }: LayoutProps) {
     const { user, isAuthenticated, logout } = useAuth()
     const { hasAdminAccess } = useAdmin()
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+
+    // Debug auth state in development
+    if (process.env.NODE_ENV === 'development') {
+        logger.auth.tokenValidation(isAuthenticated, user?.id)
+    }
 
     return (
         <div className="min-h-screen bg-background">
@@ -31,8 +44,15 @@ export default function Layout({ children }: LayoutProps) {
                             variant="ghost"
                             size="icon"
                             className="md:hidden"
+                            onClick={() =>
+                                setIsMobileMenuOpen(!isMobileMenuOpen)
+                            }
                         >
-                            <Menu className="h-4 w-4" />
+                            {isMobileMenuOpen ? (
+                                <X className="h-4 w-4" />
+                            ) : (
+                                <Menu className="h-4 w-4" />
+                            )}
                         </Button>
                         <Link href="/" className="text-2xl font-bold">
                             ShopVite
@@ -59,6 +79,18 @@ export default function Layout({ children }: LayoutProps) {
                             </Link>
                             {isAuthenticated ? (
                                 <>
+                                    <Link href="/orders">
+                                        <Button variant="ghost">
+                                            <Package className="h-4 w-4 mr-2" />
+                                            Đơn hàng
+                                        </Button>
+                                    </Link>
+                                    <Link href="/demo/order-tracking">
+                                        <Button variant="ghost">
+                                            <MapPin className="h-4 w-4 mr-2" />
+                                            Theo dõi Demo
+                                        </Button>
+                                    </Link>
                                     {hasAdminAccess && (
                                         <Link href="/admin">
                                             <Button
@@ -71,10 +103,14 @@ export default function Layout({ children }: LayoutProps) {
                                         </Link>
                                     )}
                                     <Link href="/profile">
-                                        <Button variant="ghost" className="flex items-center space-x-2 text-sm">
+                                        <Button
+                                            variant="ghost"
+                                            className="flex items-center space-x-2 text-sm"
+                                        >
                                             <User className="h-4 w-4" />
                                             <span>
-                                                {user?.firstName} {user?.lastName}
+                                                {user?.firstName}{' '}
+                                                {user?.lastName}
                                             </span>
                                         </Button>
                                     </Link>
@@ -103,89 +139,139 @@ export default function Layout({ children }: LayoutProps) {
                         </Link>
                     </nav>
                 </div>
+
+                {/* Mobile Menu */}
+                {isMobileMenuOpen && (
+                    <div className="md:hidden border-t bg-background/95 backdrop-blur">
+                        <div className="container mx-auto px-4 py-4 space-y-2">
+                            <Link
+                                href="/products"
+                                onClick={() => setIsMobileMenuOpen(false)}
+                            >
+                                <Button
+                                    variant="ghost"
+                                    className="w-full justify-start"
+                                >
+                                    Sản phẩm
+                                </Button>
+                            </Link>
+                            {isAuthenticated ? (
+                                <>
+                                    <Link
+                                        href="/orders"
+                                        onClick={() =>
+                                            setIsMobileMenuOpen(false)
+                                        }
+                                    >
+                                        <Button
+                                            variant="ghost"
+                                            className="w-full justify-start"
+                                        >
+                                            <Package className="h-4 w-4 mr-2" />
+                                            Đơn hàng
+                                        </Button>
+                                    </Link>
+                                    <Link
+                                        href="/demo/order-tracking"
+                                        onClick={() =>
+                                            setIsMobileMenuOpen(false)
+                                        }
+                                    >
+                                        <Button
+                                            variant="ghost"
+                                            className="w-full justify-start"
+                                        >
+                                            <MapPin className="h-4 w-4 mr-2" />
+                                            Theo dõi Demo
+                                        </Button>
+                                    </Link>
+                                    {hasAdminAccess && (
+                                        <Link
+                                            href="/admin"
+                                            onClick={() =>
+                                                setIsMobileMenuOpen(false)
+                                            }
+                                        >
+                                            <Button
+                                                variant="ghost"
+                                                className="w-full justify-start text-blue-600 hover:text-blue-700"
+                                            >
+                                                <BarChart3 className="h-4 w-4 mr-2" />
+                                                Admin Dashboard
+                                            </Button>
+                                        </Link>
+                                    )}
+                                    <Link
+                                        href="/profile"
+                                        onClick={() =>
+                                            setIsMobileMenuOpen(false)
+                                        }
+                                    >
+                                        <Button
+                                            variant="ghost"
+                                            className="w-full justify-start"
+                                        >
+                                            <User className="h-4 w-4 mr-2" />
+                                            {user?.firstName} {user?.lastName}
+                                        </Button>
+                                    </Link>
+                                    <Button
+                                        variant="ghost"
+                                        className="w-full justify-start"
+                                        onClick={() => {
+                                            logout()
+                                            setIsMobileMenuOpen(false)
+                                        }}
+                                    >
+                                        <LogOut className="h-4 w-4 mr-2" />
+                                        Đăng xuất
+                                    </Button>
+                                </>
+                            ) : (
+                                <>
+                                    <Link
+                                        href="/login"
+                                        onClick={() =>
+                                            setIsMobileMenuOpen(false)
+                                        }
+                                    >
+                                        <Button
+                                            variant="ghost"
+                                            className="w-full justify-start"
+                                        >
+                                            Đăng nhập
+                                        </Button>
+                                    </Link>
+                                    <Link
+                                        href="/register"
+                                        onClick={() =>
+                                            setIsMobileMenuOpen(false)
+                                        }
+                                    >
+                                        <Button
+                                            variant="ghost"
+                                            className="w-full justify-start"
+                                        >
+                                            Đăng ký
+                                        </Button>
+                                    </Link>
+                                </>
+                            )}
+                        </div>
+                    </div>
+                )}
             </header>
 
             {/* Main Content */}
-            <main>{children}</main>
+            <main className="mx-4 sm:mx-8 md:mx-16 lg:mx-32 xl:mx-48 2xl:mx-auto max-w-screen-2xl">
+                {children}
+            </main>
+
+            {/* Floating Action Button */}
+            <FloatingActionButton />
 
             {/* Footer */}
-            <footer className="bg-gray-900 text-white py-12 mt-16">
-                <div className="container mx-auto px-4">
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-                        <div>
-                            <h4 className="text-lg font-semibold mb-4">
-                                ShopVite
-                            </h4>
-                            <p className="text-gray-400">
-                                Nền tảng thương mại điện tử hàng đầu Việt Nam
-                            </p>
-                        </div>
-                        <div>
-                            <h4 className="text-lg font-semibold mb-4">
-                                Về chúng tôi
-                            </h4>
-                            <ul className="space-y-2 text-gray-400">
-                                <li>
-                                    <a href="#" className="hover:text-white">
-                                        Giới thiệu
-                                    </a>
-                                </li>
-                                <li>
-                                    <a href="#" className="hover:text-white">
-                                        Tuyển dụng
-                                    </a>
-                                </li>
-                                <li>
-                                    <a href="#" className="hover:text-white">
-                                        Tin tức
-                                    </a>
-                                </li>
-                            </ul>
-                        </div>
-                        <div>
-                            <h4 className="text-lg font-semibold mb-4">
-                                Hỗ trợ
-                            </h4>
-                            <ul className="space-y-2 text-gray-400">
-                                <li>
-                                    <a href="#" className="hover:text-white">
-                                        Trung tâm trợ giúp
-                                    </a>
-                                </li>
-                                <li>
-                                    <a href="#" className="hover:text-white">
-                                        Liên hệ
-                                    </a>
-                                </li>
-                                <li>
-                                    <a href="#" className="hover:text-white">
-                                        Chính sách
-                                    </a>
-                                </li>
-                            </ul>
-                        </div>
-                        <div>
-                            <h4 className="text-lg font-semibold mb-4">
-                                Theo dõi chúng tôi
-                            </h4>
-                            <div className="flex space-x-4">
-                                <Button variant="ghost" size="icon">
-                                    <span>FB</span>
-                                </Button>
-                                <Button variant="ghost" size="icon">
-                                    <span>IG</span>
-                                </Button>
-                                <Button variant="ghost" size="icon">
-                                    <span>TW</span>
-                                </Button>
-                            </div>
-                        </div>
-                    </div>
-                    <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-                        <p>&copy; 2025 ShopVite. Tất cả quyền được bảo lưu.</p>
-                    </div>
-                </div>
-            </footer>
+            <Footer />
         </div>
     )
 }
