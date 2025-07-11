@@ -3,8 +3,18 @@ import { useAuth } from '../providers/auth-provider'
 export function useAdmin() {
     const { user, isAuthenticated, isLoading } = useAuth()
 
-    // Get user role (role is a string according to our User interface)
-    const userRole = user?.role?.toLowerCase() || ''
+    // Debug logging
+    console.log('🔍 useAdmin Debug:', {
+        user: user,
+        userRole: user?.role,
+        isAuthenticated,
+        isLoading,
+    })
+
+    // Get user role - now always an object format
+    const userRole = user?.role?.name?.toLowerCase() || ''
+
+    console.log('🔍 Processed userRole:', userRole)
 
     // Check if user has admin role
     const isAdmin = userRole === 'admin'

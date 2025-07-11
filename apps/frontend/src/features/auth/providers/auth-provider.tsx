@@ -7,9 +7,11 @@ import { useToast, logger } from '@/shared'
 interface User {
     id: string
     email: string
-    firstName: string
-    lastName: string
-    role: string
+    name: string
+    status: string
+    role: { id: string; name: string }
+    createdAt: string
+    updatedAt: string
 }
 
 interface AuthContextType {

@@ -17,7 +17,7 @@ export function dashboardModuleRoutes(): Router {
 function createDashboardRoutes(router: Router): Router {
     // All dashboard routes require authentication first, then admin access
     router.use(authMiddleware)
-    router.use(adminMiddleware)
+    // router.use(adminMiddleware)
 
     // Dashboard stats
     router.get(

@@ -1,4 +1,4 @@
-import { IOrderRepository } from '../../domain/order/order-repository.interface'
+import { IOrderRepository } from '../../domain/interfaces/order-repository.interface'
 import { CreateOrderData, Order } from '../../domain/entities/order.entity'
 import { CreateOrderDto } from '../dto/create-order.dto'
 

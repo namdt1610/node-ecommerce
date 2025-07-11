@@ -6,14 +6,6 @@ import { GetProductAnalyticsUseCase } from '../../application/use-cases/get-prod
 import { GetRecentActivityUseCase } from '../../application/use-cases/get-recent-activity.usecase'
 import { SocketService } from '../../infrastructure/services/socket.service'
 
-interface AuthenticatedRequest extends Request {
-    user?: {
-        id: string
-        email: string
-        role?: string
-    }
-}
-
 export class DashboardController {
     constructor(
         private getDashboardStatsUseCase: GetDashboardStatsUseCase,
@@ -24,7 +16,7 @@ export class DashboardController {
         private socketService: SocketService
     ) {}
 
-    async getDashboardStats(req: AuthenticatedRequest, res: Response) {
+    async getDashboardStats(req: Request, res: Response) {
         try {
             // Admin access is already verified by middleware
             const stats = await this.getDashboardStatsUseCase.execute()
@@ -45,7 +37,7 @@ export class DashboardController {
         }
     }
 
-    async getSalesAnalytics(req: AuthenticatedRequest, res: Response) {
+    async getSalesAnalytics(req: Request, res: Response) {
         try {
             const days = req.query.days
                 ? parseInt(req.query.days as string)
@@ -69,7 +61,7 @@ export class DashboardController {
         }
     }
 
-    async getUserAnalytics(req: AuthenticatedRequest, res: Response) {
+    async getUserAnalytics(req: Request, res: Response) {
         try {
             const userAnalytics = await this.getUserAnalyticsUseCase.execute()
 
@@ -89,7 +81,7 @@ export class DashboardController {
         }
     }
 
-    async getProductAnalytics(req: AuthenticatedRequest, res: Response) {
+    async getProductAnalytics(req: Request, res: Response) {
         try {
             const productAnalytics =
                 await this.getProductAnalyticsUseCase.execute()
@@ -110,7 +102,7 @@ export class DashboardController {
         }
     }
 
-    async getRecentActivity(req: AuthenticatedRequest, res: Response) {
+    async getRecentActivity(req: Request, res: Response) {
         try {
             const activity = await this.getRecentActivityUseCase.execute()
 
@@ -131,7 +123,7 @@ export class DashboardController {
     }
 
     // Get all dashboard data in one request
-    async getAllDashboardData(req: AuthenticatedRequest, res: Response) {
+    async getAllDashboardData(req: Request, res: Response) {
         try {
             const days = req.query.days
                 ? parseInt(req.query.days as string)
@@ -181,7 +173,7 @@ export class DashboardController {
     }
 
     // Trigger manual refresh for all connected admins
-    async triggerRefresh(req: AuthenticatedRequest, res: Response) {
+    async triggerRefresh(req: Request, res: Response) {
         try {
             // Send refresh command to all connected admins
             this.socketService.emitNotification({
@@ -204,7 +196,7 @@ export class DashboardController {
     }
 
     // Get real-time dashboard status
-    async getDashboardStatus(req: AuthenticatedRequest, res: Response) {
+    async getDashboardStatus(req: Request, res: Response) {
         try {
             res.json({
                 success: true,

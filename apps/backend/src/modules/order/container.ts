@@ -6,7 +6,7 @@ import { GetOrdersByUserUseCase } from './application/use-cases/get-orders-by-us
 import { UpdateOrderUseCase } from './application/use-cases/update-order.usecase'
 import { PrismaOrderRepository } from './infrastructure/repositories/prisma-order.repository'
 import { OrderTrackingService } from './infrastructure/services/order-tracking.service'
-import { IOrderRepository } from './domain/order/order-repository.interface'
+import { IOrderRepository } from './domain/interfaces/order-repository.interface'
 import { Server as SocketIOServer } from 'socket.io'
 
 export interface OrderContainer {

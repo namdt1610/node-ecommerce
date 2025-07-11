@@ -1,37 +1,40 @@
 import { Router } from 'express'
 import { createUserController } from './container'
 import { authMiddleware } from '@/common/middlewares/auth.middleware'
-
-const asyncHandler = (fn: any) => (req: any, res: any, next: any) =>
-    Promise.resolve(fn(req, res, next)).catch(next)
+import { createRoutes, RouteConfig } from '@/common/utils/route.utils'
 
 export function userModuleRoutes(): Router {
     const router = Router()
     const controller = createUserController()
 
-    // Profile routes (require authentication)
-    router.get(
-        '/profile',
-        authMiddleware,
-        asyncHandler(controller.getProfile.bind(controller))
-    )
-    router.put(
-        '/profile',
-        authMiddleware,
-        asyncHandler(controller.updateProfile.bind(controller))
-    )
+    const routes: RouteConfig[] = [
+        // Profile routes (require authentication)
+        {
+            method: 'get',
+            path: '/profile',
+            handler: 'getProfile',
+            middlewares: [authMiddleware],
+        },
+        {
+            method: 'put',
+            path: '/profile',
+            handler: 'updateProfile',
+            middlewares: [authMiddleware],
+        },
+        // Admin routes (require authentication)
+        {
+            method: 'get',
+            path: '/',
+            handler: 'getAllUsers',
+            middlewares: [authMiddleware],
+        },
+        {
+            method: 'delete',
+            path: '/:id',
+            handler: 'deleteUser',
+            middlewares: [authMiddleware],
+        },
+    ]
 
-    // Admin routes (require authentication)
-    router.get(
-        '/',
-        authMiddleware,
-        asyncHandler(controller.getAllUsers.bind(controller))
-    )
-    router.delete(
-        '/:id',
-        authMiddleware,
-        asyncHandler(controller.deleteUser.bind(controller))
-    )
-
-    return router
+    return createRoutes(router, controller, routes)
 }

@@ -44,12 +44,15 @@ api.interceptors.response.use(
         return response
     },
     (error) => {
-        console.error('API Error:', {
+        const errorInfo = {
             url: error.config?.url,
             status: error.response?.status,
             message: error.message,
             data: error.response?.data,
-        })
+            stack: error.stack,
+        }
+        console.error('API Error:', errorInfo)
+
         if (error.response?.status === 401) {
             // Handle unauthorized
             localStorage.removeItem('token')

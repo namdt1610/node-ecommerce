@@ -1,16 +1,28 @@
 import { Router } from 'express'
 import { createAuthController } from './container'
-
-const asyncHandler = (fn: any) => (req: any, res: any, next: any) =>
-    Promise.resolve(fn(req, res, next)).catch(next)
+import { createRoutes, RouteConfig } from '@/common/utils/route.utils'
 
 export function authModuleRoutes(): Router {
     const router = Router()
     const controller = createAuthController()
 
-    router.post('/register', asyncHandler(controller.register.bind(controller)))
-    router.post('/login', asyncHandler(controller.login.bind(controller)))
-    router.post('/logout', asyncHandler(controller.logout.bind(controller)))
+    const routes: RouteConfig[] = [
+        {
+            method: 'post',
+            path: '/register',
+            handler: 'register',
+        },
+        {
+            method: 'post',
+            path: '/login',
+            handler: 'login',
+        },
+        {
+            method: 'post',
+            path: '/logout',
+            handler: 'logout',
+        },
+    ]
 
-    return router
+    return createRoutes(router, controller, routes)
 }

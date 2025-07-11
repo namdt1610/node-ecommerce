@@ -54,17 +54,17 @@ export const useSocket = (enabled: boolean = true) => {
 
         socket.on('dashboard:stats-update', (data: SocketData) => {
             console.log('📊 Stats update received:', data)
-            queryClient.invalidateQueries({ queryKey: ['dashboard', 'stats'] })
+            // Don't invalidate queries to prevent re-render loop
         })
 
         socket.on('dashboard:sales-update', (data: SocketData) => {
             console.log('💰 Sales update received:', data)
-            queryClient.invalidateQueries({ queryKey: ['dashboard', 'sales'] })
+            // Don't invalidate queries to prevent re-render loop
         })
 
         socket.on('dashboard:users-update', (data: SocketData) => {
             console.log('👥 Users update received:', data)
-            queryClient.invalidateQueries({ queryKey: ['dashboard', 'users'] })
+            // Don't invalidate queries to prevent re-render loop
         })
 
         socket.on('dashboard:products-update', (data: SocketData) => {
@@ -83,7 +83,7 @@ export const useSocket = (enabled: boolean = true) => {
 
         socket.on('dashboard:update', (data: SocketData) => {
             console.log('🔄 Full dashboard update received:', data)
-            queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+            // Don't invalidate all queries to prevent re-render loop
         })
 
         return () => {

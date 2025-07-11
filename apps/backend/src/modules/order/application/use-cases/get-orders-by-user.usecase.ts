@@ -1,4 +1,4 @@
-import { IOrderRepository } from '../../domain/order/order-repository.interface'
+import { IOrderRepository } from '../../domain/interfaces/order-repository.interface'
 import { Order } from '../../domain/entities/order.entity'
 
 export class GetOrdersByUserUseCase {

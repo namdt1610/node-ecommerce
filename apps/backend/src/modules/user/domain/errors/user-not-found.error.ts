@@ -1,6 +1,7 @@
-export class UserNotFoundError extends Error {
+import { NotFoundError } from '@/common/errors/base.error'
+
+export class UserNotFoundError extends NotFoundError {
     constructor(userId: string) {
-        super(`User with ID ${userId} not found`)
-        this.name = 'UserNotFoundError'
+        super('User', userId)
     }
 }

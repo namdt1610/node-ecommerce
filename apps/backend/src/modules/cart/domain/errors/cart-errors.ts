@@ -1,51 +1,54 @@
-export class CartItemNotFoundError extends Error {
+import {
+    NotFoundError,
+    ValidationError,
+    BusinessLogicError,
+    UnauthorizedError,
+} from '@/common/errors/base.error'
+
+export class CartItemNotFoundError extends NotFoundError {
     constructor(itemId: string) {
-        super(`Cart item with ID ${itemId} not found`)
-        this.name = 'CartItemNotFoundError'
+        super('Cart item', itemId)
     }
 }
 
-export class ProductNotInCartError extends Error {
+export class ProductNotInCartError extends NotFoundError {
     constructor(productId: string) {
-        super(`Product ${productId} is not in cart`)
-        this.name = 'ProductNotInCartError'
+        super('Product in cart', productId)
     }
 }
 
-export class InvalidQuantityError extends Error {
+export class InvalidQuantityError extends ValidationError {
     constructor(quantity: number) {
-        super(`Invalid quantity: ${quantity}. Quantity must be greater than 0`)
-        this.name = 'InvalidQuantityError'
+        super(
+            `Invalid quantity: ${quantity}. Quantity must be greater than 0`,
+            'quantity'
+        )
     }
 }
 
-export class CartEmptyError extends Error {
+export class CartEmptyError extends BusinessLogicError {
     constructor() {
         super('Cart is empty')
-        this.name = 'CartEmptyError'
     }
 }
 
-export class ProductOutOfStockError extends Error {
+export class ProductOutOfStockError extends BusinessLogicError {
     constructor(productName: string, availableStock: number) {
         super(
             `Product ${productName} has insufficient stock. Available: ${availableStock}`
         )
-        this.name = 'ProductOutOfStockError'
     }
 }
 
-export class InsufficientStockError extends Error {
+export class InsufficientStockError extends BusinessLogicError {
     constructor(message: string) {
         super(message)
-        this.name = 'InsufficientStockError'
     }
 }
 
-export class UnauthorizedCartAccessError extends Error {
-    constructor(message: string) {
+export class UnauthorizedCartAccessError extends UnauthorizedError {
+    constructor(message: string = 'Unauthorized cart access') {
         super(message)
-        this.name = 'UnauthorizedCartAccessError'
     }
 }
 

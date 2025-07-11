@@ -1,6 +1,6 @@
 // Re-export main inventory components
 export { inventoryModuleRoutes } from './routes'
-export { createInventoryContainer } from './container'
+export { InventoryContainer } from './container'
 
 // Export refactored components for direct usage
 export { InventoryReadController } from './presentation/controllers/inventory-read.controller'

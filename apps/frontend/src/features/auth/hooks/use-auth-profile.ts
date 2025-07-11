@@ -41,13 +41,12 @@ export const useAuthProfile = () => {
                     '✅ AuthProfile: Profile API success:',
                     response.data
                 )
-                return response
+                return response.data.data // Return user data directly
             } catch (error) {
                 console.log('❌ AuthProfile: Profile API error:', error)
                 throw error
             }
         },
-        select: (data) => data.data,
         retry: (failureCount, error: unknown) => {
             // Don't retry on 401 errors (unauthorized)
             if (

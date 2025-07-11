@@ -1,35 +1,37 @@
-export class ProductNotFoundError extends Error {
+import {
+    NotFoundError,
+    ValidationError,
+    ConflictError,
+    BusinessLogicError,
+} from '@/common/errors/base.error'
+
+export class ProductNotFoundError extends NotFoundError {
     constructor(productId: string) {
-        super(`Product with ID ${productId} not found`)
-        this.name = 'ProductNotFoundError'
+        super('Product', productId)
     }
 }
 
-export class ProductNotAvailableError extends Error {
+export class ProductNotAvailableError extends BusinessLogicError {
     constructor(message: string) {
         super(message)
-        this.name = 'ProductNotAvailableError'
     }
 }
 
-export class ProductAlreadyExistsError extends Error {
+export class ProductAlreadyExistsError extends ConflictError {
     constructor(message: string) {
         super(message)
-        this.name = 'ProductAlreadyExistsError'
     }
 }
 
-export class InvalidProductDataError extends Error {
-    constructor(message: string) {
-        super(message)
-        this.name = 'InvalidProductDataError'
+export class InvalidProductDataError extends ValidationError {
+    constructor(message: string, field?: string) {
+        super(message, field)
     }
 }
 
-export class ProductCreationError extends Error {
+export class ProductCreationError extends BusinessLogicError {
     constructor(message: string) {
         super(message)
-        this.name = 'ProductCreationError'
     }
 }
 

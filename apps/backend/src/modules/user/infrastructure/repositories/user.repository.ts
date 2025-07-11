@@ -1,5 +1,6 @@
 import { PrismaClient, Role, User, Prisma } from '@prisma/client'
 import { IUserRepository } from '../../domain/interfaces/user-repository'
+import prisma from '@/config/database'
 
 type UserWithRole = User & { role: Role }
 
@@ -7,7 +8,7 @@ export class PrismaUserRepo implements IUserRepository {
     private prisma: PrismaClient
 
     constructor() {
-        this.prisma = new PrismaClient()
+        this.prisma = prisma
     }
 
     async findByEmail(email: string): Promise<UserWithRole | null> {

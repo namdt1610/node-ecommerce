@@ -112,12 +112,12 @@ export class DashboardRepository implements IDashboardRepository {
             // Daily revenue for the period
             this.prisma.$queryRaw<any[]>`
                 SELECT 
-                    DATE(created_at) as date,
+                    DATE("createdAt") as date,
                     COALESCE(SUM(CASE WHEN status = 'DELIVERED' THEN total ELSE 0 END), 0) as revenue,
                     COUNT(*) as orders
                 FROM orders 
-                WHERE created_at >= ${startDate} AND created_at <= ${endDate}
-                GROUP BY DATE(created_at)
+                WHERE "createdAt" >= ${startDate} AND "createdAt" <= ${endDate}
+                GROUP BY DATE("createdAt")
                 ORDER BY date DESC
             `,
 
@@ -130,8 +130,8 @@ export class DashboardRepository implements IDashboardRepository {
                     COALESCE(SUM(oi.quantity), 0) as sales,
                     COALESCE(SUM(oi.quantity * oi.price), 0) as revenue
                 FROM products p
-                LEFT JOIN order_items oi ON p.id = oi.product_id
-                LEFT JOIN orders o ON oi.order_id = o.id AND o.status = 'DELIVERED'
+                LEFT JOIN order_items oi ON p.id = oi."productId"
+                LEFT JOIN orders o ON oi."orderId" = o.id AND o.status = 'DELIVERED'
                 GROUP BY p.id, p.name, p.images
                 ORDER BY revenue DESC
                 LIMIT 10
@@ -207,11 +207,11 @@ export class DashboardRepository implements IDashboardRepository {
 
             this.prisma.$queryRaw<any[]>`
                 SELECT 
-                    TO_CHAR(created_at, 'YYYY-MM') as month,
+                    TO_CHAR("createdAt", 'YYYY-MM') as month,
                     COUNT(*) as users
                 FROM users 
-                WHERE created_at >= ${lastYear}
-                GROUP BY TO_CHAR(created_at, 'YYYY-MM')
+                WHERE "createdAt" >= ${lastYear}
+                GROUP BY TO_CHAR("createdAt", 'YYYY-MM')
                 ORDER BY month
             `,
         ])

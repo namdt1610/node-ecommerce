@@ -96,7 +96,7 @@ export class InventoryWriteController extends BaseController {
     async reserveStock(req: Request, res: Response): Promise<void> {
         try {
             const validatedData = ReserveStockSchema.parse(req.body)
-            const userId = req.user?.id // Assuming auth middleware
+            const userId = (req as any).user?.id // Assuming auth middleware
             const { productId } = req.body // Add productId from request body
 
             const result = await this.reserveStockUseCase.execute({
@@ -131,7 +131,7 @@ export class InventoryWriteController extends BaseController {
     async releaseStock(req: Request, res: Response): Promise<void> {
         try {
             const { productId, quantity, referenceId, reason } = req.body
-            const userId = req.user?.id
+            const userId = (req as any).user?.id
 
             const result = await this.releaseStockUseCase.execute({
                 productId,

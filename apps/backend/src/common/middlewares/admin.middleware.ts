@@ -1,32 +1,18 @@
 import { Request, Response, NextFunction } from 'express'
 import { createError } from './error-handler.middleware'
 
-interface AuthenticatedRequest extends Request {
-    user?: {
-        id: string
-        email: string
-        role: {
-            id: string
-            name: string
-            permissions?: Array<{
-                resource: string
-                action: string
-            }>
-        }
-    }
-}
-
 export const adminMiddleware = async (
-    req: AuthenticatedRequest,
+    req: Request,
     res: Response,
     next: NextFunction
 ): Promise<void> => {
     try {
-        if (!req.user) {
+        const user = (req as any).user
+        if (!user) {
             throw createError('Authentication required', 401)
         }
 
-        const userRole = req.user.role?.name?.toLowerCase()
+        const userRole = user.role?.name?.toLowerCase()
 
         // Check if user has admin role
         if (userRole !== 'admin') {
@@ -37,8 +23,8 @@ export const adminMiddleware = async (
         }
 
         // Additional check: verify user has dashboard permissions
-        const hasAdminPermissions = req.user.role.permissions?.some(
-            (permission) =>
+        const hasAdminPermissions = user.role.permissions?.some(
+            (permission: any) =>
                 permission.resource === 'dashboard' &&
                 permission.action === 'read'
         )
@@ -64,16 +50,17 @@ export const adminMiddleware = async (
 
 export const requireAdminRole = (allowedRoles: string[] = ['admin']) => {
     return async (
-        req: AuthenticatedRequest,
+        req: Request,
         res: Response,
         next: NextFunction
     ): Promise<void> => {
         try {
-            if (!req.user) {
+            const user = (req as any).user
+            if (!user) {
                 throw createError('Authentication required', 401)
             }
 
-            const userRole = req.user.role?.name?.toLowerCase()
+            const userRole = user.role?.name?.toLowerCase()
 
             if (
                 !allowedRoles

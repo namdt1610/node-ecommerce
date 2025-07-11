@@ -28,5 +28,9 @@
         "concurrently": "^8.2.2"
     },
     "author": "",
-    "license": "ISC"
+    "license": "ISC",
+    "dependencies": {
+        "date-fns": "^4.1.0",
+        "recharts": "^3.1.0"
+    }
 }
