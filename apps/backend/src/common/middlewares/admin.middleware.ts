@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express'
-import { createError } from './error-handler.middleware'
+import { createError } from './error-handler'
 
 export const adminMiddleware = async (
     req: Request,

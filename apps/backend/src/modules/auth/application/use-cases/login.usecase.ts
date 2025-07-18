@@ -5,18 +5,24 @@ import { IJwtAccessTokenGenerator } from '../../domain/interfaces/jwt-access-tok
 import { IJwtRefreshTokenGenerator } from '../../domain/interfaces/jwt-refresh-token-generator'
 import { User, Role } from '@prisma/client'
 import { InvalidCredentialsError } from '../../domain/errors/invalid-credentials-error'
+import { BaseCommandUseCase } from '@/common'
 
 type UserWithRole = User & { role: Role }
 
-export class LoginUseCase {
+export class LoginUseCase extends BaseCommandUseCase<
+    LoginDto,
+    AuthResponseDto
+> {
     constructor(
         private userRepo: IUserRepository,
         private passwordHasher: IPasswordHasher,
         private accessGen: IJwtAccessTokenGenerator,
         private refreshGen: IJwtRefreshTokenGenerator
-    ) {}
+    ) {
+        super()
+    }
 
-    async execute(dto: LoginDto): Promise<AuthResponseDto> {
+    protected async validateBusinessRules(dto: LoginDto): Promise<void> {
         const existing = await this.userRepo.findByEmail(dto.email)
         if (!existing) {
             throw new InvalidCredentialsError()
@@ -29,6 +35,12 @@ export class LoginUseCase {
         if (!isMatch) {
             throw new InvalidCredentialsError()
         }
+    }
+
+    protected async performCommand(dto: LoginDto): Promise<AuthResponseDto> {
+        const existing = (await this.userRepo.findByEmail(
+            dto.email
+        )) as UserWithRole
 
         const accessToken = this.accessGen.generate(existing.id)
         const refreshToken = this.refreshGen.generate(existing.id)

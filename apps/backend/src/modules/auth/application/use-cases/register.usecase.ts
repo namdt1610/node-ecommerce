@@ -5,18 +5,24 @@ import { IJwtAccessTokenGenerator } from '../../domain/interfaces/jwt-access-tok
 import { IJwtRefreshTokenGenerator } from '../../domain/interfaces/jwt-refresh-token-generator'
 import { User, Role } from '@prisma/client'
 import { UserAlreadyExistsError } from '../../domain/errors/user-already-exists'
+import { BaseCommandUseCase } from '@/common'
 
 type UserWithRole = User & { role: Role }
 
-export class RegisterUseCase {
+export class RegisterUseCase extends BaseCommandUseCase<
+    RegisterDto,
+    AuthResponseDto
+> {
     constructor(
         private userRepo: IUserRepository,
         private passwordHasher: IPasswordHasher,
         private accessGen: IJwtAccessTokenGenerator,
         private refreshGen: IJwtRefreshTokenGenerator
-    ) {}
+    ) {
+        super()
+    }
 
-    async execute(dto: RegisterDto): Promise<AuthResponseDto> {
+    protected async validateBusinessRules(dto: RegisterDto): Promise<void> {
         // Validate password confirmation
         if (dto.password !== dto.confirmPassword) {
             throw new Error('Passwords do not match')
@@ -26,7 +32,9 @@ export class RegisterUseCase {
         if (existing) {
             throw new UserAlreadyExistsError(dto.email)
         }
+    }
 
+    protected async performCommand(dto: RegisterDto): Promise<AuthResponseDto> {
         const hashed = await this.passwordHasher.hash(dto.password)
 
         const createdUser = (await this.userRepo.create({

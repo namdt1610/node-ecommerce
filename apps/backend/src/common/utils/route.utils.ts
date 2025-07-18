@@ -34,7 +34,10 @@ export function createRoutes(
             const controllerMethod = controller[handler]
 
             if (!controllerMethod) {
-                throw new Error(`Controller method '${handler}' not found`)
+                console.warn(
+                    `Controller method '${handler}' not found, skipping route ${method.toUpperCase()} ${path}`
+                )
+                return // Skip this route instead of throwing error
             }
 
             const boundMethod = controllerMethod.bind(controller)
@@ -58,6 +61,13 @@ export function createRoutes(
  */
 export interface CrudRouteConfig {
     basePath?: string
+    methodMapping?: {
+        create?: string
+        getAll?: string
+        getById?: string
+        update?: string
+        delete?: string
+    }
     middlewares?: {
         all?: Array<(req: Request, res: Response, next: NextFunction) => void>
         create?: Array<
@@ -79,46 +89,77 @@ export function createCrudRoutes(
     controller: any,
     config: CrudRouteConfig = {}
 ): Router {
-    const { basePath = '', middlewares = {}, customRoutes = [] } = config
+    const {
+        basePath = '',
+        middlewares = {},
+        customRoutes = [],
+        methodMapping = {},
+    } = config
+
+    // Auto-detect methods if not provided
+    const detectedMethods = detectCrudMethods(controller)
+
+    // Merge with provided mapping, preferring provided over detected
+    const methods = {
+        create: methodMapping.create || detectedMethods.create,
+        getAll: methodMapping.getAll || detectedMethods.getAll,
+        getById: methodMapping.getById || detectedMethods.getById,
+        update: methodMapping.update || detectedMethods.update,
+        delete: methodMapping.delete || detectedMethods.delete,
+    }
 
     // Apply common middlewares
     if (middlewares.all) {
         router.use(basePath, ...middlewares.all)
     }
 
-    // Standard CRUD routes
-    const crudRoutes: RouteConfig[] = [
-        {
+    // Standard CRUD routes - only create if method exists
+    const crudRoutes: RouteConfig[] = []
+
+    if (methods.create) {
+        crudRoutes.push({
             method: 'post',
             path: basePath || '/',
-            handler: 'create',
+            handler: methods.create,
             middlewares: middlewares.create,
-        },
-        {
+        })
+    }
+
+    if (methods.getAll) {
+        crudRoutes.push({
             method: 'get',
             path: basePath || '/',
-            handler: 'getAll',
+            handler: methods.getAll,
             middlewares: middlewares.read,
-        },
-        {
+        })
+    }
+
+    if (methods.getById) {
+        crudRoutes.push({
             method: 'get',
             path: `${basePath}/:id`,
-            handler: 'getById',
+            handler: methods.getById,
             middlewares: middlewares.read,
-        },
-        {
+        })
+    }
+
+    if (methods.update) {
+        crudRoutes.push({
             method: 'put',
             path: `${basePath}/:id`,
-            handler: 'update',
+            handler: methods.update,
             middlewares: middlewares.update,
-        },
-        {
+        })
+    }
+
+    if (methods.delete) {
+        crudRoutes.push({
             method: 'delete',
             path: `${basePath}/:id`,
-            handler: 'delete',
+            handler: methods.delete,
             middlewares: middlewares.delete,
-        },
-    ]
+        })
+    }
 
     // Create CRUD routes
     createRoutes(router, controller, crudRoutes)
@@ -145,4 +186,48 @@ export function withErrorHandling<T extends any[], R>(
             throw error
         }
     }
+}
+
+/**
+ * Auto-detect controller method names based on common patterns
+ */
+export function detectCrudMethods(controller: any): {
+    create?: string
+    getAll?: string
+    getById?: string
+    update?: string
+    delete?: string
+} {
+    const methods = Object.getOwnPropertyNames(
+        Object.getPrototypeOf(controller)
+    ).filter(
+        (name) =>
+            typeof controller[name] === 'function' && name !== 'constructor'
+    )
+
+    const patterns = {
+        create: ['create', 'add', 'post'],
+        getAll: ['getAll', 'list', 'index', 'get'],
+        getById: ['getById', 'get', 'find', 'show'],
+        update: ['update', 'put', 'patch', 'edit'],
+        delete: ['delete', 'remove', 'destroy'],
+    }
+
+    const detected: any = {}
+
+    for (const [crudOp, possibleNames] of Object.entries(patterns)) {
+        for (const pattern of possibleNames) {
+            const found = methods.find(
+                (method) =>
+                    method.toLowerCase().includes(pattern.toLowerCase()) ||
+                    method.toLowerCase() === pattern.toLowerCase()
+            )
+            if (found) {
+                detected[crudOp] = found
+                break
+            }
+        }
+    }
+
+    return detected
 }

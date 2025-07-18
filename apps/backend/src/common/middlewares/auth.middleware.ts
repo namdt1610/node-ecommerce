@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express'
 import * as jwt from 'jsonwebtoken'
 import { PrismaUserRepo } from '../../modules/user/infrastructure/repositories/user.repository'
-import { createError } from './error-handler.middleware'
+import { createError } from './error-handler'
 
 interface AuthenticatedRequest extends Request {
     user?: any
